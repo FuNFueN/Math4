@@ -181,37 +181,41 @@
     document.getElementById('retryBtn').style.display = 'none';
   }
 
-  function saveScore() {
-    const leaderboardRef = db.ref("leaderboard");
-    leaderboardRef.push({
-      name: playerName,
-      score: score,
-      timestamp: Date.now()
-    }).then(updateLeaderboard);  // ✅ อัปเดตอันดับทันทีเมื่อบันทึกเสร็จ
-  }
+ function saveScore() {
+  const ref = db.ref("leaderboard/" + playerName);
+
+  ref.once("value", snapshot => {
+    const data = snapshot.val();
+    if (!data || score > data.score) {
+      ref.set({
+        name: playerName,
+        score: score,
+        timestamp: Date.now()
+      }).then(updateLeaderboard); // ✅ อัปเดต leaderboard ทันที
+    }
 
   function updateLeaderboard() {
-    const list = document.getElementById("leaderboard-list");
-    const boardRef = db.ref("leaderboard");
+  const list = document.getElementById("leaderboard-list");
+  const boardRef = db.ref("leaderboard");
 
-    boardRef.on("value", snapshot => {
-      const entries = [];
-      snapshot.forEach(child => {
-        const val = child.val();
-        if (val && val.name && typeof val.score === "number") {
-          entries.push(val);
-        }
-      });
-
-      entries.sort((a, b) => b.score - a.score);
-      list.innerHTML = "";
-      entries.slice(0, 10).forEach(entry => {
-        const li = document.createElement("li");
-        li.textContent = `${entry.name}: ${entry.score}`;
-        list.appendChild(li);
-      });
+  boardRef.once("value", snapshot => {
+    const entries = [];
+    snapshot.forEach(child => {
+      const val = child.val();
+      if (val && typeof val.score === "number") {
+        entries.push(val); // ไม่มีชื่อซ้ำ เพราะ key เป็นชื่อแล้ว
+      }
     });
-  }
+
+    entries.sort((a, b) => b.score - a.score);
+    list.innerHTML = "";
+    entries.slice(0, 10).forEach(entry => {
+      const li = document.createElement("li");
+      li.textContent = `${entry.name}: ${entry.score}`;
+      list.appendChild(li);
+    });
+  });
+}
 </script>
 </body>
 </html>
