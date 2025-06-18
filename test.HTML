@@ -1,0 +1,218 @@
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>เกมคิดเลขปราบปีศาจ</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f4f4fc;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+    .table {
+      display: grid;
+      grid-template-columns: repeat(8, 50px);
+      grid-template-rows: repeat(3, 50px);
+      gap: 0;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .cell, .input-cell {
+      border: 1px solid #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .input-cell input {
+      width: 100%;
+      height: 100%;
+      border: 1px solid #000;
+      font-size: 20px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+    .btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    .feedback {
+      font-size: 18px;
+      min-height: 40px;
+      opacity: 0;
+      transition: opacity 0.5s;
+      white-space: pre-wrap;
+    }
+    .feedback.visible {
+      opacity: 1;
+    }
+    #leaderboard {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>เกมคิดเลขปราบปีศาจ</h1>
+    <input type="text" id="playerName" placeholder="กรอกชื่อของคุณ" />
+    <button id="startBtn" class="btn" onclick="startGame()">เริ่มเกม</button>
+
+    <div id="game" style="display:none;">
+      <div class="table" id="question-table"></div>
+      <button class="btn" onclick="checkAnswer()">ส่งคำตอบ</button>
+      <button class="btn" id="retryBtn" style="display:none;" onclick="retryQuestion()">ลองโจมตีอีกครั้ง</button>
+      <div class="feedback" id="feedback"></div>
+      <div>คะแนน: <span id="score">0</span> | พลังชีวิต: <span id="hp">3</span></div>
+      <div id="leaderboard">
+        <h3>จัดอันดับ</h3>
+        <ol id="leaderboard-list"></ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <script>
+  // Firebase config ที่อัปเดต URL ให้ตรง region แล้ว
+  const firebaseConfig = {
+    apiKey: "AIzaSyDUsBD_dwqR4Y466sA4lXukPA3hqk5-KJY",
+    authDomain: "math-p4.firebaseapp.com",
+    databaseURL: "https://math-p4-default-rtdb.asia-southeast1.firebasedatabase.app", // ✅ แก้แล้ว
+    projectId: "math-p4",
+    storageBucket: "math-p4.appspot.com",
+    messagingSenderId: "937474922058",
+    appId: "1:937474922058:web:aad038e45ec5b5847bf8b3"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  let playerName = '';
+  let score = 0;
+  let hp = 3;
+  let currentAnswer = '';
+
+  function startGame() {
+    playerName = document.getElementById('playerName').value.trim();
+    if (!playerName) return alert('กรุณากรอกชื่อ');
+    document.getElementById('game').style.display = 'block';
+    document.getElementById('playerName').style.display = 'none';
+    document.getElementById('startBtn').style.display = 'none';
+    generateQuestion();
+    updateLeaderboard(); // ✅ โหลดอันดับรอบแรก
+  }
+
+  function generateQuestion() {
+    const container = document.getElementById('question-table');
+    container.innerHTML = '';
+    const num1 = Math.floor(Math.random() * 900000) + 100000;
+    const num2 = Math.floor(Math.random() * 900000) + 100000;
+    const result = num1 + num2;
+    currentAnswer = result.toString();
+    const s1 = num1.toString().padStart(8, ' ');
+    const s2 = num2.toString().padStart(8, ' ');
+
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 8; c++) {
+        const div = document.createElement('div');
+        div.className = 'cell';
+
+        if (r === 0 && s1[c] !== ' ') div.textContent = s1[c];
+        else if (r === 1) div.textContent = (c === 0 ? '+' : '') + (s2[c] !== ' ' ? s2[c] : '');
+        else if (r === 2) {
+          div.className += ' input-cell';
+          div.innerHTML = `<input maxlength="1">`;
+        }
+        container.appendChild(div);
+      }
+    }
+    document.getElementById('retryBtn').style.display = 'none';
+  }
+
+  function checkAnswer() {
+    const inputs = document.querySelectorAll('.input-cell input');
+    const userAnswer = Array.from(inputs).map(input => input.value || ' ').join('').trim();
+    const feedback = document.getElementById('feedback');
+    const retryBtn = document.getElementById('retryBtn');
+
+    if (userAnswer === currentAnswer) {
+      score += 10;
+      feedback.style.color = 'green';
+      feedback.textContent = '✅ ตอบถูก! โจมตีปีศาจสำเร็จ!';
+      hp = Math.min(5, hp + (score % 30 === 0 ? 1 : 0));
+      retryBtn.style.display = 'none';
+      generateQuestion();
+    } else {
+      hp -= 1;
+      feedback.style.color = 'red';
+      let hint = '';
+      for (let i = 0; i < currentAnswer.length; i++) {
+        if (userAnswer[i] !== currentAnswer[i]) {
+          hint += `ตำแหน่งที่ ${i + 1} ควรเป็น ${currentAnswer[i]}\n`;
+        }
+      }
+      feedback.textContent = `❌ ตอบผิด! ถูกปีศาจโจมตี!\nคำตอบที่ถูกคือ ${currentAnswer}\n${hint}`;
+      retryBtn.style.display = 'inline-block';
+      if (hp <= 0) {
+        alert('Game Over! คะแนนของคุณ: ' + score);
+        saveScore();
+        return location.reload();
+      }
+    }
+
+    feedback.classList.add('visible');
+    document.getElementById('score').textContent = score;
+    document.getElementById('hp').textContent = hp;
+    saveScore();         // ✅ บันทึกคะแนน
+  }
+
+  function retryQuestion() {
+    const inputs = document.querySelectorAll('.input-cell input');
+    inputs.forEach(input => input.value = '');
+    document.getElementById('feedback').classList.remove('visible');
+    document.getElementById('retryBtn').style.display = 'none';
+  }
+
+  function saveScore() {
+    const leaderboardRef = db.ref("leaderboard");
+    leaderboardRef.push({
+      name: playerName,
+      score: score,
+      timestamp: Date.now()
+    }).then(updateLeaderboard);  // ✅ อัปเดตอันดับทันทีเมื่อบันทึกเสร็จ
+  }
+
+  function updateLeaderboard() {
+    const list = document.getElementById("leaderboard-list");
+    const boardRef = db.ref("leaderboard");
+
+    boardRef.on("value", snapshot => {
+      const entries = [];
+      snapshot.forEach(child => {
+        const val = child.val();
+        if (val && val.name && typeof val.score === "number") {
+          entries.push(val);
+        }
+      });
+
+      entries.sort((a, b) => b.score - a.score);
+      list.innerHTML = "";
+      entries.slice(0, 10).forEach(entry => {
+        const li = document.createElement("li");
+        li.textContent = `${entry.name}: ${entry.score}`;
+        list.appendChild(li);
+      });
+    });
+  }
+</script>
+</body>
+</html>
+
