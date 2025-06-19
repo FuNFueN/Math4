@@ -1,0 +1,141 @@
+/* พื้นหลัง + ฟอนต์ */
+body {
+  font-family: 'Prompt', sans-serif;
+  background: #1e1e2f;
+  color: white;
+  text-align: center;
+  padding: 30px 10px;
+}
+
+/* อินพุตและปุ่ม */
+input, button {
+  font-family: 'Prompt', sans-serif;
+}
+
+input {
+  font-size: 24px;
+  padding: 5px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+button {
+  font-size: 20px;
+  padding: 10px 20px;
+  margin-top: 10px;
+  cursor: pointer;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: #43a047;
+}
+
+/* ตารางแนวตั้งช่องกรอบ */
+.math-grid {
+  display: grid;
+  grid-template-columns: repeat(11, 40px);
+  gap: 4px;
+  justify-content: center;
+  margin: 30px auto;
+  background: #fff;
+  padding: 10px;
+  border-radius: 10px;
+}
+.math-cell {
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
+  text-align: center;
+  vertical-align: middle;
+  border: 1px solid #666;
+  line-height: 40px;
+  background-color: white;
+  color: black;
+}
+
+.math-cell input {
+  width: 100%;
+  height: 100%;
+  font-size: 20px;
+  border: none;
+  text-align: center;
+  background: transparent;
+}
+
+/* ป้ายระดับ + สถานะ */
+#levelTitle {
+  font-size: 28px;
+  margin-top: 10px;
+}
+
+.status {
+  margin-top: 20px;
+  font-size: 20px;
+}
+
+#feedback {
+  margin: 15px 0;
+  font-weight: bold;
+  color: gold;
+  font-size: 20px;
+}
+
+/* กระดานผู้นำ */
+#leaderboard-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px auto;
+  max-width: 300px;
+  text-align: left;
+}
+
+#leaderboard-list li {
+  background: #2e2e40;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.horizontal-layout {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+}
+.theme1 {
+  background: url('https://i.postimg.cc/vB84Lwjt/1.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+}
+.theme2 {
+  background: url('https://i.postimg.cc/sxv1q93B/2.jpg') no-repeat center center fixed;
+  background-size: cover;
+}}
+.theme3 {
+  background: url('https://i.postimg.cc/P5mJgqnM/3.jpg') no-repeat center center fixed;
+  background-size: cover;
+}}
+.theme4 {
+  background: url('https://i.postimg.cc/28LVxwHM/4.jpg') no-repeat center center fixed;
+  background-size: cover;
+}}
+.theme5 {
+  background: url('https://i.postimg.cc/k4hgQ6W7/5.jpg') no-repeat center center fixed;
+  background-size: cover;
+}}
+.theme6 {
+  background: url('https://i.postimg.cc/T24KmScn/6.jpg') no-repeat center center fixed;
+  background-size: cover;
+}}
+.theme7 {
+  background: url('https://i.postimg.cc/vmbTbdQw/7.jpg') no-repeat center center fixed;
+  background-size: cover;
+}}
+.theme8 {
+  background: url('https://i.postimg.cc/SsKKY72Z/8.webp') no-repeat center center fixed;
+  background-size: cover;
+}
