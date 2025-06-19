@@ -2,221 +2,412 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>เกมคิดเลขปราบปีศาจ</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      background-color: #f4f4fc;
-      text-align: center;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      padding: 20px;
-    }
-    .table {
-      display: grid;
-      grid-template-columns: repeat(8, 50px);
-      grid-template-rows: repeat(3, 50px);
-      gap: 0;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .cell, .input-cell {
-      border: 1px solid #000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
-    .input-cell input {
-      width: 100%;
-      height: 100%;
-      border: 1px solid #000;
-      font-size: 20px;
-      text-align: center;
-      box-sizing: border-box;
-    }
-    .btn {
-      padding: 10px 20px;
-      font-size: 16px;
-      margin: 5px;
-      cursor: pointer;
-    }
-    .feedback {
-      font-size: 18px;
-      min-height: 40px;
-      opacity: 0;
-      transition: opacity 0.5s;
-      white-space: pre-wrap;
-    }
-    .feedback.visible {
-      opacity: 1;
-    }
-    #leaderboard {
-      margin-top: 20px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>เกมคิดเลขปราบปีศาจ</h1>
-    <input type="text" id="playerName" placeholder="กรอกชื่อของคุณ" />
-    <button id="startBtn" class="btn" onclick="startGame()">เริ่มเกม</button>
-
-    <div id="game" style="display:none;">
-      <div class="table" id="question-table"></div>
-      <button class="btn" onclick="checkAnswer()">ส่งคำตอบ</button>
-      <button class="btn" id="retryBtn" style="display:none;" onclick="retryQuestion()">ลองโจมตีอีกครั้ง</button>
-      <div class="feedback" id="feedback"></div>
-      <div>คะแนน: <span id="score">0</span> | พลังชีวิต: <span id="hp">3</span></div>
-      <div id="leaderboard">
-        <h3>จัดอันดับ</h3>
-        <ol id="leaderboard-list"></ol>
-      </div>
-    </div>
-  </div>
-
-  <!-- Firebase SDK -->
+  <title>ปีนหอคอยปราบจอมมาร</title>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+  <div id="login-screen">
+    <h1>ปีนหอคอยปราบจอมมาร</h1>
+    <input id="playerName" placeholder="กรอกชื่อของคุณ" />
+    <button id="startBtn">เริ่มเกม</button>
+  </div>
 
-  <script>
-  // Firebase config ที่อัปเดต URL ให้ตรง region แล้ว
-  const firebaseConfig = {
-    apiKey: "AIzaSyDUsBD_dwqR4Y466sA4lXukPA3hqk5-KJY",
-    authDomain: "math-p4.firebaseapp.com",
-    databaseURL: "https://math-p4-default-rtdb.asia-southeast1.firebasedatabase.app", // ✅ แก้แล้ว
-    projectId: "math-p4",
-    storageBucket: "math-p4.appspot.com",
-    messagingSenderId: "937474922058",
-    appId: "1:937474922058:web:aad038e45ec5b5847bf8b3"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  <div id="game" style="display: none">
+    <h2 id="levelTitle">ชั้นที่ 1</h2>
 
-  let playerName = '';
-  let score = 0;
-  let hp = 3;
-  let currentAnswer = '';
+    <!-- 🔢 แสดงตารางแนวตั้งช่องกรอบ -->
+    <div id="question-grid" class="math-grid"></div>
+<button id="submitBtn">ส่งคำตอบ</button>
+    <div id="feedback"></div>
+    <div class="status">
+      ❤️ <span id="hp">3</span> | คะแนน: <span id="score">0</span>
+    </div>
 
-  function startGame() {
-    playerName = document.getElementById('playerName').value.trim();
-    if (!playerName) return alert('กรุณากรอกชื่อ');
-    document.getElementById('game').style.display = 'block';
-    document.getElementById('playerName').style.display = 'none';
-    document.getElementById('startBtn').style.display = 'none';
-    generateQuestion();
-    updateLeaderboard(); // ✅ โหลดอันดับรอบแรก
+    <h3>🔥 กระดานผู้นำ</h3>
+    <ul id="leaderboard-list"></ul>
+  </div>
+
+  <script src="script.js"></script>
+  <div id="level-selector" style="margin-top: 20px;">
+  <label for="levelSelect">เลือกชั้น: </label>
+  <select id="levelSelect">
+    <option value="1">ชั้นที่ 1</option>
+    <option value="2">ชั้นที่ 2</option>
+    <option value="3">ชั้นที่ 3</option>
+    <option value="4">ชั้นที่ 4</option>
+    <option value="5">ชั้นที่ 5</option>
+    <option value="6">ชั้นที่ 6</option>
+    <option value="7">ชั้นที่ 7</option>
+    <option value="8">ชั้นที่ 8</option>
+    <option value="9">ชั้นที่ 9</option>
+    <option value="10">ชั้นที่ 10</option>
+  </select>
+</div>
+</body>
+</html>
+.........................................................................................................
+/* พื้นหลัง + ฟอนต์ */
+body {
+  font-family: 'Prompt', sans-serif;
+  background: #1e1e2f;
+  color: white;
+  text-align: center;
+  padding: 30px 10px;
+}
+
+/* อินพุตและปุ่ม */
+input, button {
+  font-family: 'Prompt', sans-serif;
+}
+
+input {
+  font-size: 24px;
+  padding: 5px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+button {
+  font-size: 20px;
+  padding: 10px 20px;
+  margin-top: 10px;
+  cursor: pointer;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: #43a047;
+}
+
+/* ตารางแนวตั้งช่องกรอบ */
+.math-grid {
+  display: grid;
+  grid-template-columns: repeat(11, 40px);
+  gap: 4px;
+  justify-content: center;
+  margin: 30px auto;
+  background: #fff;
+  padding: 10px;
+  border-radius: 10px;
+}
+.math-cell {
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
+  text-align: center;
+  vertical-align: middle;
+  border: 1px solid #666;
+  line-height: 40px;
+  background-color: white;
+  color: black;
+}
+
+.math-cell input {
+  width: 100%;
+  height: 100%;
+  font-size: 20px;
+  border: none;
+  text-align: center;
+  background: transparent;
+}
+
+/* ป้ายระดับ + สถานะ */
+#levelTitle {
+  font-size: 28px;
+  margin-top: 10px;
+}
+
+.status {
+  margin-top: 20px;
+  font-size: 20px;
+}
+
+#feedback {
+  margin: 15px 0;
+  font-weight: bold;
+  color: gold;
+  font-size: 20px;
+}
+
+/* กระดานผู้นำ */
+#leaderboard-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px auto;
+  max-width: 300px;
+  text-align: left;
+}
+
+#leaderboard-list li {
+  background: #2e2e40;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.horizontal-layout {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+}
+...................................................................
+const firebaseConfig = {
+  apiKey: "AIzaSyDUsBD_dwqR4Y466sA4lXukPA3hqk5-KJY",
+  authDomain: "math-p4.firebaseapp.com",
+  databaseURL: "https://math-p4-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "math-p4",
+  storageBucket: "math-p4.appspot.com",
+  messagingSenderId: "937474922058",
+  appId: "1:937474922058:web:aad038e45ec5b5847bf8b3"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let playerName = '';
+let score = 0;
+let level = 1;
+let hp = 3;
+let currentAnswer = '';
+
+document.getElementById("startBtn").addEventListener("click", () => {
+  playerName = document.getElementById("playerName").value.trim();
+  if (!playerName) return alert("กรุณากรอกชื่อก่อนเริ่มเกม");
+
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("game").style.display = "block";
+
+  updateUI();
+  generateQuestion();
+});
+
+function generateQuestion() {
+  const container = document.getElementById("question-grid");
+  container.innerHTML = '';
+
+  let a = Math.floor(Math.random() * 900) + 100;
+  let b = Math.floor(Math.random() * 90) + 10;
+  let op = '+';
+
+  if (level >= 3 && level <= 4) op = '-';
+  else if (level >= 5 && level <= 7) op = '*';
+  else if (level >= 8 && level <= 10) {
+    op = '/';
+    b = Math.floor(Math.random() * 9) + 2;
+    a = b * Math.floor(Math.random() * 10 + 1);
   }
 
-  function generateQuestion() {
-    const container = document.getElementById('question-table');
-    container.innerHTML = '';
-    const num1 = Math.floor(Math.random() * 900000) + 100000;
-    const num2 = Math.floor(Math.random() * 900000) + 100000;
-    const result = num1 + num2;
-    currentAnswer = result.toString();
-    const s1 = num1.toString().padStart(8, ' ');
-    const s2 = num2.toString().padStart(8, ' ');
+  let result = 0;
+  switch (op) {
+    case '+': result = a + b; break;
+    case '-': result = a - b; break;
+    case '*': result = a * b; break;
+    case '/': result = a / b; break;
+  }
 
-    for (let r = 0; r < 3; r++) {
-      for (let c = 0; c < 8; c++) {
-        const div = document.createElement('div');
-        div.className = 'cell';
+  currentAnswer = result.toString();
+  renderVerticalOperation(a, b, op);
+}
+function renderVerticalOperation(a, b, operator) {
+  const container = document.getElementById("question-grid");
+  container.innerHTML = '';
+  const maxLength = 11;
+    container.className = ''; 
+  if (operator === '+' || operator === '-') {
+    // ➕➖ บวก/ลบ 3 บรรทัด
+    container.classList.add('math-grid');
+    const aStr = a.toString().padStart(maxLength, ' ').split('');
+    const bStr = b.toString().padStart(maxLength - 1, ' ').split('');
 
-        if (r === 0 && s1[c] !== ' ') div.textContent = s1[c];
-        else if (r === 1) div.textContent = (c === 0 ? '+' : '') + (s2[c] !== ' ' ? s2[c] : '');
-        else if (r === 2) {
-          div.className += ' input-cell';
-          div.innerHTML = `<input maxlength="1">`;
-        }
-        container.appendChild(div);
-      }
+    // บรรทัดที่ 1: ตัวตั้ง
+    aStr.forEach(d => {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.textContent = d.trim();
+      container.appendChild(cell);
+    });
+
+    // บรรทัดที่ 2: ตัวล่างพร้อม operator
+    const opRow = [operator, ...bStr];
+    opRow.slice(0, maxLength).forEach(d => {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.textContent = d.trim();
+      container.appendChild(cell);
+    });
+
+    // บรรทัดที่ 3: ช่องกรอกคำตอบ
+    for (let i = 0; i < maxLength; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.innerHTML = `<input maxlength="1" style="width:100%; border:none; text-align:center;">`;
+      container.appendChild(cell);
     }
-    document.getElementById('retryBtn').style.display = 'none';
-  }
 
-  function checkAnswer() {
-    const inputs = document.querySelectorAll('.input-cell input');
-    const userAnswer = Array.from(inputs).map(input => input.value || ' ').join('').trim();
-    const feedback = document.getElementById('feedback');
-    const retryBtn = document.getElementById('retryBtn');
+  } else if (operator === '*') {
+    // ✖️ คูณหลายบรรทัดตามหลักตัวคูณ + 1 แถวคำตอบ
+    container.classList.add('math-grid');
+    const aStr = a.toString().padStart(maxLength, ' ').split('');
+    const bStr = b.toString().padStart(maxLength - 1, ' ').split('');
+    const multiplierDigits = b.toString().split('').reverse();
 
-    if (userAnswer === currentAnswer) {
-      score += 10;
-      feedback.style.color = 'green';
-      feedback.textContent = '✅ ตอบถูก! โจมตีปีศาจสำเร็จ!';
-      hp = Math.min(5, hp + (score % 30 === 0 ? 1 : 0));
-      retryBtn.style.display = 'none';
-      generateQuestion();
-    } else {
-      hp -= 1;
-      feedback.style.color = 'red';
-      let hint = '';
-      for (let i = 0; i < currentAnswer.length; i++) {
-        if (userAnswer[i] !== currentAnswer[i]) {
-          hint += `ตำแหน่งที่ ${i + 1} ควรเป็น ${currentAnswer[i]}\n`;
-        }
+    // บรรทัดที่ 1: ตัวตั้ง
+    aStr.forEach(d => {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.textContent = d.trim();
+      container.appendChild(cell);
+    });
+
+    // บรรทัดที่ 2: ตัวคูณพร้อม operator
+    const row2 = [operator, ...bStr];
+    row2.slice(0, maxLength).forEach(d => {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.textContent = d.trim();
+      container.appendChild(cell);
+    });
+
+    // แถวตัวคูณย่อยตามหลัก
+    multiplierDigits.forEach((digit, i) => {
+      const row = new Array(maxLength).fill('');
+      const partialProduct = (a * parseInt(digit)).toString().split('').reverse();
+
+      for (let j = 0; j < partialProduct.length; j++) {
+        const index = maxLength - 1 - j - i;
+        if (index >= 0) row[index] = ''; // ช่องเปล่าให้กรอกเอง
       }
-      feedback.textContent = `❌ ตอบผิด! ถูกปีศาจโจมตี!\nคำตอบที่ถูกคือ ${currentAnswer}\n${hint}`;
-      retryBtn.style.display = 'inline-block';
-      if (hp <= 0) {
-        alert('Game Over! คะแนนของคุณ: ' + score);
-        saveScore();
-        return location.reload();
-      }
+
+      row.forEach(() => {
+        const cell = document.createElement('div');
+        cell.className = 'math-cell';
+        cell.innerHTML = `<input maxlength="1" style="width:100%; border:none; text-align:center;">`;
+        container.appendChild(cell);
+      });
+    });
+
+    // แถวสุดท้าย: ผลลัพธ์รวม
+    for (let i = 0; i < maxLength; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.innerHTML = `<input maxlength="1" style="width:100%; border:none; text-align:center;">`;
+      container.appendChild(cell);
     }
 
-    feedback.classList.add('visible');
-    document.getElementById('score').textContent = score;
-    document.getElementById('hp').textContent = hp;
-    saveScore();         // ✅ บันทึกคะแนน
+  } else if (operator === '/') {
+     container.classList.add('horizontal-layout');
+    const wrapper = document.createElement("div");
+  wrapper.style.display = "flex";
+  wrapper.style.justifyContent = "center";
+  wrapper.style.alignItems = "center";
+  wrapper.style.flexWrap = "wrap";
+  wrapper.style.gap = "10px";
+  wrapper.style.fontSize = "28px";
+  wrapper.style.color = "black"; // ✅ ทำให้มองเห็น
+
+  const label = document.createElement("span");
+  label.textContent = `${a} ÷ ${b} =`;
+  label.style.color = "black"; // ✅
+
+  const input = document.createElement("input");
+  input.setAttribute("inputmode", "numeric");
+  input.setAttribute("maxlength", "6");
+  input.style.fontSize = "24px";
+  input.style.textAlign = "center";
+  input.style.border = "none";
+  input.style.borderBottom = "2px solid black";
+  input.style.color = "black"; // ✅
+  input.style.background = "white"; // ✅ ตัดพื้นหลังเข้ม
+  input.style.width = "100px";
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") checkAnswer(input.value.trim());
+  });
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(input);
+  container.appendChild(wrapper);
+
+  currentAnswer = Math.floor(a / b).toString();
+}
+}
+function checkAnswerFromInputs() {
+  const inputs = document.querySelectorAll('#question-grid input');
+  const userAnswer = Array.from(inputs).map(i => i.value || '').join('').trim();
+
+  checkAnswer(userAnswer);
+}
+
+function checkAnswer(ans) {
+  const feedback = document.getElementById("feedback");
+  if (ans === currentAnswer) {
+    score += 10;
+    level++;
+    feedback.textContent = "✅ ตอบถูก! ไปต่อ!";
+  } else {
+    hp--;
+    feedback.textContent = `❌ ผิด! คำตอบคือ ${currentAnswer}`;
   }
 
-  function retryQuestion() {
-    const inputs = document.querySelectorAll('.input-cell input');
-    inputs.forEach(input => input.value = '');
-    document.getElementById('feedback').classList.remove('visible');
-    document.getElementById('retryBtn').style.display = 'none';
+  if (hp <= 0 || level > 10) {
+    saveScore(() => {
+      alert(`จบเกม! คะแนน: ${score}`);
+      location.reload();
+    });
+    return;
   }
 
- function saveScore() {
-  const ref = db.ref("leaderboard/" + playerName);
+  updateUI();
+  generateQuestion();
+}
 
-  ref.once("value", snapshot => {
-    const data = snapshot.val();
-    if (!data || score > data.score) {
-      ref.set({
-        name: playerName,
-        score: score,
-        timestamp: Date.now()
-      }).then(updateLeaderboard); // ✅ อัปเดต leaderboard ทันที
-    }
+function updateUI() {
+  document.getElementById("score").textContent = score;
+  document.getElementById("hp").textContent = hp;
+  document.getElementById("levelTitle").textContent = `ชั้นที่ ${level}`;
+}
 
-  function updateLeaderboard() {
+function saveScore(callback) {
+  const ref = db.ref("tower-leaderboard/" + playerName);
+  ref.set({
+    name: playerName,
+    score: score,
+    level: level,
+    timestamp: Date.now()
+  }).then(callback);
+}
+
+function updateLeaderboard() {
   const list = document.getElementById("leaderboard-list");
-  const boardRef = db.ref("leaderboard");
-
+  const boardRef = db.ref("tower-leaderboard");
   boardRef.once("value", snapshot => {
     const entries = [];
     snapshot.forEach(child => {
       const val = child.val();
-      if (val && typeof val.score === "number") {
-        entries.push(val); // ไม่มีชื่อซ้ำ เพราะ key เป็นชื่อแล้ว
-      }
+      if (val && typeof val.score === "number") entries.push(val);
     });
-
     entries.sort((a, b) => b.score - a.score);
     list.innerHTML = "";
-    entries.slice(0, 10).forEach(entry => {
+
+    entries.slice(0, 10).forEach((entry, index) => {
       const li = document.createElement("li");
-      li.textContent = `${entry.name}: ${entry.score}`;
+      li.textContent = `${index + 1}. ${entry.name}: ${entry.score} คะแนน`;
       list.appendChild(li);
     });
   });
 }
-</script>
-</body>
-</html>
+document.getElementById("submitBtn").addEventListener("click", () => {
+  checkAnswerFromInputs();
+});
+window.addEventListener("DOMContentLoaded", updateLeaderboard);
 
+document.getElementById("levelSelect").addEventListener("change", (e) => {
+  level = parseInt(e.target.value);
+  updateUI();
+  generateQuestion();
+});
