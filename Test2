@@ -1,0 +1,483 @@
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ปีนหอคอยปราบจอมมาร</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+  <div id="login-screen">
+    <h1>ปีนหอคอยปราบจอมมาร</h1>
+    <input id="playerName" placeholder="กรอกชื่อของคุณ" />
+    <button id="startBtn">เริ่มเกม</button>
+  </div>
+
+  <div id="game" style="display: none">
+    <h2 id="levelTitle">ชั้นที่ 1</h2>
+
+    <!-- 🔢 แสดงตารางแนวตั้งช่องกรอบ -->
+    <div id="question-grid" class="math-grid"></div>
+<button id="submitBtn">ส่งคำตอบ</button>
+    <div id="feedback"></div>
+    <div class="status">
+      ❤️ <span id="hp">3</span> | คะแนน: <span id="score">0</span>
+    </div>
+
+    <h3>🔥 กระดานผู้นำ</h3>
+    <ul id="leaderboard-list"></ul>
+  </div>
+
+  <div id="level-selector" style="margin-top: 20px;">
+  <label for="levelSelect">เลือกชั้น: </label>
+  <select id="levelSelect">
+    <option value="1">ชั้นที่ 1</option>
+    <option value="2">ชั้นที่ 2</option>
+    <option value="3">ชั้นที่ 3</option>
+    <option value="4">ชั้นที่ 4</option>
+    <option value="5">ชั้นที่ 5</option>
+    <option value="6">ชั้นที่ 6</option>
+    <option value="7">ชั้นที่ 7</option>
+    <option value="8">ชั้นที่ 8</option>
+    <option value="9">ชั้นที่ 9</option>
+    <option value="10">ชั้นที่ 10</option>
+    <option value="11">ชั้นที่ 11</option>
+    <option value="12">ชั้นที่ 12</option>
+    <option value="13">ชั้นที่ 13</option>
+    <option value="14">ชั้นที่ 14</option>
+    <option value="15">ชั้นที่ 15</option>
+    <option value="16">ชั้นที่ 16</option>
+    <option value="17">ชั้นที่ 17</option>
+    <option value="18">ชั้นที่ 18</option>
+    <option value="19">ชั้นที่ 19</option>
+    <option value="20">ชั้นที่ 20</option>
+    <option value="21">ชั้นที่ 21</option>
+    <option value="22">ชั้นที่ 22</option>
+    <option value="23">ชั้นที่ 23</option>
+    <option value="24">ชั้นที่ 24</option>
+    <option value="25">ชั้นที่ 25</option>
+    <option value="26">ชั้นที่ 26</option>
+    <option value="27">ชั้นที่ 27</option>
+    <option value="28">ชั้นที่ 28</option>
+    <option value="29">ชั้นที่ 29</option>
+    <option value="30">ชั้นที่ 30</option>
+    <option value="31">ชั้นที่ 31</option>
+    <option value="32">ชั้นที่ 32</option>
+    <option value="33">ชั้นที่ 33</option>
+    <option value="34">ชั้นที่ 34</option>
+    <option value="35">ชั้นที่ 35</option>
+    <option value="36">ชั้นที่ 36</option>
+    <option value="37">ชั้นที่ 37</option>
+    <option value="38">ชั้นที่ 38</option>
+    <option value="39">ชั้นที่ 39</option>
+    <option value="40">ชั้นที่ 40</option>
+    <option value="41">ชั้นที่ 41</option>
+  </select>
+</div>
+  </select>
+</div>
+</body>
+</html>
+............................................
+/* พื้นหลัง + ฟอนต์ */
+body {
+  font-family: 'Prompt', sans-serif;
+  background: #1e1e2f;
+  color: white;
+  text-align: center;
+  padding: 30px 10px;
+}
+
+/* อินพุตและปุ่ม */
+input, button {
+  font-family: 'Prompt', sans-serif;
+}
+
+input {
+  font-size: 24px;
+  padding: 5px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+button {
+  font-size: 20px;
+  padding: 10px 20px;
+  margin-top: 10px;
+  cursor: pointer;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: #43a047;
+}
+
+/* ตารางแนวตั้งช่องกรอบ */
+.math-grid {
+  display: grid;
+  grid-template-columns: repeat(11, 40px);
+  gap: 4px;
+  justify-content: center;
+  margin: 30px auto;
+  background: #fff;
+  padding: 10px;
+  border-radius: 10px;
+}
+.math-cell {
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
+  text-align: center;
+  vertical-align: middle;
+  border: 1px solid #666;
+  line-height: 40px;
+  background-color: white;
+  color: black;
+}
+
+.math-cell input {
+  width: 100%;
+  height: 100%;
+  font-size: 20px;
+  border: none;
+  text-align: center;
+  background: transparent;
+}
+
+/* ป้ายระดับ + สถานะ */
+#levelTitle {
+  font-size: 28px;
+  margin-top: 10px;
+}
+
+.status {
+  margin-top: 20px;
+  font-size: 20px;
+}
+
+#feedback {
+  margin: 15px 0;
+  font-weight: bold;
+  color: gold;
+  font-size: 20px;
+}
+
+/* กระดานผู้นำ */
+#leaderboard-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px auto;
+  max-width: 300px;
+  text-align: left;
+}
+
+#leaderboard-list li {
+  background: #2e2e40;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.horizontal-layout {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+}
+..........................................................
+const firebaseConfig = {
+  apiKey: "AIzaSyDUsBD_dwqR4Y466sA4lXukPA3hqk5-KJY",
+  authDomain: "math-p4.firebaseapp.com",
+  databaseURL: "https://math-p4-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "math-p4",
+  storageBucket: "math-p4.appspot.com",
+  messagingSenderId: "937474922058",
+  appId: "1:937474922058:web:aad038e45ec5b5847bf8b3"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let playerName = '';
+let score = 0;
+let level = 1;
+let hp = 3;
+let currentAnswer = '';
+
+document.getElementById("startBtn").addEventListener("click", () => {
+  playerName = document.getElementById("playerName").value.trim();
+  if (!playerName) return alert("กรุณากรอกชื่อก่อนเริ่มเกม");
+
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("game").style.display = "block";
+
+  updateUI();
+  generateQuestion();
+});
+function getRandom(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function generateQuestion() {
+  const container = document.getElementById("question-grid");
+  container.innerHTML = '';
+
+  let a = 0, b = 0, op = '+';
+
+if (level >= 1 && level <= 9) {
+  op = '+';
+  a = Math.floor(Math.random() * 9000000) + 1000000;
+  b = Math.floor(Math.random() * 900000) + 100000;
+} else if (level === 10) {
+op = '+';
+  a = Math.floor(Math.random() * 90000000) + 10000000;
+  b = Math.floor(Math.random() * 9000000) + 1000000;
+
+} else if (level >= 11 && level <= 19) {
+  op = '-';
+  a = Math.floor(Math.random() * 9000000) + 1000000; 
+  b = Math.floor(Math.random() * 900000) + 100000;
+ } else if (level === 20) {
+op = '-';
+  a = Math.floor(Math.random() * 90000000) + 10000000;
+  b = Math.floor(Math.random() * 9000000) + 1000000;
+
+} else if (level >= 21 && level <= 25) {
+  op = '*';
+  a = Math.floor(Math.random() * 100) + 10; 
+  b = Math.floor(Math.random() * 100) + 10;
+ } else if (level >= 26 && level <= 29) {
+  op = '*';
+  a = Math.floor(Math.random() * 1000) + 100; 
+  b = Math.floor(Math.random() * 100) + 10;
+ } else if (level === 30) {
+ op = '*';
+  a = Math.floor(Math.random() * 9000) + 1000; 
+  b = Math.floor(Math.random() * 900) + 100;
+
+} else if (level >= 31 && level <= 35) {
+  op = '/';
+ b = Math.floor(Math.random() * 8) + 2; 
+a = b * (Math.floor(Math.random() * 902) + 99);
+} else if (level >= 36 && level <= 39) {
+  op = '/';
+  b = Math.floor(Math.random() * 80) + 20; 
+  a = b * (Math.floor(Math.random() * 1000) + 100);
+} else if (level === 40) {
+ op = '/';
+b = Math.floor(Math.random() * 9000) + 900;
+a = b * (Math.floor(Math.random() * 9000) + 1000);
+  }
+  let result = 0;
+  switch (op) {
+    case '+': result = a + b; break;
+    case '-': result = a - b; break;
+    case '*': result = a * b; break;
+    case '/': result = a / b; break;
+  }
+
+  currentAnswer = result.toString();
+  renderVerticalOperation(a, b, op);
+
+}
+function renderVerticalOperation(a, b, operator) {
+  const container = document.getElementById("question-grid");
+  container.innerHTML = '';
+  const maxLength = 11;
+    container.className = ''; 
+  if (operator === '+' || operator === '-') {
+    // ➕➖ บวก/ลบ 3 บรรทัด
+    container.classList.add('math-grid');
+    const aStr = a.toString().padStart(maxLength, ' ').split('');
+    const bStr = b.toString().padStart(maxLength - 1, ' ').split('');
+
+    // บรรทัดที่ 1: ตัวตั้ง
+    aStr.forEach(d => {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.textContent = d.trim();
+      container.appendChild(cell);
+    });
+
+    // บรรทัดที่ 2: ตัวล่างพร้อม operator
+    const opRow = [operator, ...bStr];
+    opRow.slice(0, maxLength).forEach(d => {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.textContent = d.trim();
+      container.appendChild(cell);
+    });
+
+    // บรรทัดที่ 3: ช่องกรอกคำตอบ
+    for (let i = 0; i < maxLength; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.innerHTML = `<input maxlength="1" style="width:100%; border:none; text-align:center;">`;
+      container.appendChild(cell);
+    }
+
+  } else if (operator === '*') {
+    // ✖️ คูณหลายบรรทัดตามหลักตัวคูณ + 1 แถวคำตอบ
+    container.classList.add('math-grid');
+    const aStr = a.toString().padStart(maxLength, ' ').split('');
+    const bStr = b.toString().padStart(maxLength - 1, ' ').split('');
+    const multiplierDigits = b.toString().split('').reverse();
+
+    // บรรทัดที่ 1: ตัวตั้ง
+    aStr.forEach(d => {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.textContent = d.trim();
+      container.appendChild(cell);
+    });
+
+    // บรรทัดที่ 2: ตัวคูณพร้อม operator
+    const row2 = [operator, ...bStr];
+    row2.slice(0, maxLength).forEach(d => {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.textContent = d.trim();
+      container.appendChild(cell);
+    });
+
+    // แถวตัวคูณย่อยตามหลัก
+    multiplierDigits.forEach((digit, i) => {
+      const row = new Array(maxLength).fill('');
+      const partialProduct = (a * parseInt(digit)).toString().split('').reverse();
+
+      for (let j = 0; j < partialProduct.length; j++) {
+        const index = maxLength - 1 - j - i;
+        if (index >= 0) row[index] = ''; // ช่องเปล่าให้กรอกเอง
+      }
+
+      row.forEach(() => {
+        const cell = document.createElement('div');
+        cell.className = 'math-cell';
+        cell.innerHTML = `<input maxlength="1" style="width:100%; border:none; text-align:center;">`;
+        container.appendChild(cell);
+      });
+    });
+
+    // แถวสุดท้าย: ผลลัพธ์รวม
+    for (let i = 0; i < maxLength; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.innerHTML = `<input maxlength="1" style="width:100%; border:none; text-align:center;">`;
+      container.appendChild(cell);
+    }
+
+  } else if (operator === '/') {
+     container.classList.add('horizontal-layout');
+    const wrapper = document.createElement("div");
+  wrapper.style.display = "flex";
+  wrapper.style.justifyContent = "center";
+  wrapper.style.alignItems = "center";
+  wrapper.style.flexWrap = "wrap";
+  wrapper.style.gap = "10px";
+  wrapper.style.fontSize = "28px";
+  wrapper.style.color = "black"; // ✅ ทำให้มองเห็น
+
+  const label = document.createElement("span");
+  label.textContent = `${a} ÷ ${b} =`;
+  label.style.color = "black"; // ✅
+
+  const input = document.createElement("input");
+  input.setAttribute("inputmode", "numeric");
+  input.setAttribute("maxlength", "6");
+  input.style.fontSize = "24px";
+  input.style.textAlign = "center";
+  input.style.border = "none";
+  input.style.borderBottom = "2px solid black";
+  input.style.color = "black"; // ✅
+  input.style.background = "white"; // ✅ ตัดพื้นหลังเข้ม
+  input.style.width = "100px";
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") checkAnswer(input.value.trim());
+  });
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(input);
+  container.appendChild(wrapper);
+
+  currentAnswer = Math.floor(a / b).toString();
+}
+}
+function checkAnswerFromInputs() {
+  const inputs = document.querySelectorAll('#question-grid input');
+  const userAnswer = Array.from(inputs).map(i => i.value || '').join('').trim();
+
+  checkAnswer(userAnswer);
+}
+
+function checkAnswer(ans) {
+  const feedback = document.getElementById("feedback");
+  if (ans === currentAnswer) {
+    score += 10;
+    level++;
+    feedback.textContent = "✅ ตอบถูก! ไปต่อ!";
+  } else {
+    hp--;
+    feedback.textContent = `❌ ผิด! คำตอบคือ ${currentAnswer}`;
+  }
+
+  if (hp <= 0 || level > 100) {
+    saveScore(() => {
+      alert(`จบเกม! คะแนน: ${score}`);
+      location.reload();
+    });
+    return;
+  }
+
+  updateUI();
+  generateQuestion();
+}
+
+function updateUI() {
+  document.getElementById("score").textContent = score;
+  document.getElementById("hp").textContent = hp;
+  document.getElementById("levelTitle").textContent = `ชั้นที่ ${level}`;
+}
+
+function saveScore(callback) {
+  const ref = db.ref("tower-leaderboard/" + playerName);
+  ref.set({
+    name: playerName,
+    score: score,
+    level: level,
+    timestamp: Date.now()
+  }).then(callback);
+}
+
+function updateLeaderboard() {
+  const list = document.getElementById("leaderboard-list");
+  const boardRef = db.ref("tower-leaderboard");
+  boardRef.once("value", snapshot => {
+    const entries = [];
+    snapshot.forEach(child => {
+      const val = child.val();
+      if (val && typeof val.score === "number") entries.push(val);
+    });
+    entries.sort((a, b) => b.score - a.score);
+    list.innerHTML = "";
+
+    entries.slice(0, 10).forEach((entry, index) => {
+      const li = document.createElement("li");
+      li.textContent = `${index + 1}. ${entry.name}: ${entry.score} คะแนน`;
+      list.appendChild(li);
+    });
+  });
+}
+document.getElementById("submitBtn").addEventListener("click", () => {
+  checkAnswerFromInputs();
+});
+window.addEventListener("DOMContentLoaded", updateLeaderboard);
+
+document.getElementById("levelSelect").addEventListener("change", (e) => {
+  level = parseInt(e.target.value);
+  updateUI();
+  generateQuestion();
+});
+.........................................................
