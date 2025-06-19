@@ -411,3 +411,52 @@ document.getElementById("levelSelect").addEventListener("change", (e) => {
   updateUI();
   generateQuestion();
 });
+
+................................................................................................................
+if (level >= 1 && level <= 9) {
+  op = '+';
+  a = Math.floor(Math.random() * 9000000) + 1000000;
+  b = Math.floor(Math.random() * 900000) + 100000;
+} else if (level === 10) {
+op = '+';
+  a = Math.floor(Math.random() * 90000000) + 10000000;
+  b = Math.floor(Math.random() * 9000000) + 1000000;
+
+} else if (level >= 11 && level <= 19) {
+  op = '-';
+  a = Math.floor(Math.random() * 9000000) + 1000000; 
+  b = Math.floor(Math.random() * 900000) + 100000;
+ } else if (level === 20) {
+op = '-';
+  a = Math.floor(Math.random() * 90000000) + 10000000;
+  b = Math.floor(Math.random() * 9000000) + 1000000;
+
+} else if (level >= 21 && level <= 25) {
+  op = '*';
+  a = Math.floor(Math.random() * 100) + 10; 
+  b = Math.floor(Math.random() * 100) + 10;
+ } else if (level >= 26 && level <= 29) {
+  op = '*';
+  a = Math.floor(Math.random() * 1000) + 100; 
+  b = Math.floor(Math.random() * 100) + 10;
+ } else if (level === 30) {
+ op = '*';
+  a = Math.floor(Math.random() * 9000) + 1000; 
+  b = Math.floor(Math.random() * 900) + 100;
+
+} else if (level >= 31 && level <= 35) {
+  op = '/';
+ b = Math.floor(Math.random() * 8) + 2; 
+a = b * (Math.floor(Math.random() * (1000 - 99 + 1)) + 99);
+} else if (level >= 36 && level <= 39) {
+  op = '/';
+  b = Math.floor(Math.random() * 80) + 20; 
+  a = b * (Math.floor(Math.random() * 1000) + 100);
+} else if (level === 40) {
+ op = '/';
+b = Math.floor(Math.random() * 9000) + 900;
+a = b * (Math.floor(Math.random() * 9000) + 1000);
+
+
+
+
