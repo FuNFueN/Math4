@@ -16,15 +16,19 @@ op = '*';
   a = Math.floor(Math.random() * 50) + 20; 
   b = Math.floor(Math.random() * 50) + 20;
 } else if (level >= 8 && level <=9 ) {
-op = '/';
-  a = Math.floor(Math.random() * 90000000) + 10000000;
-  b = Math.floor(Math.random() * 9000000) + 1000000;
+  op = '/';
+ b = Math.floor(Math.random() * 8) + 2; 
+ a = b * (Math.floor(Math.random() * 902) + 99);
 } else if (level === 10) {
 op = '+';
   a = Math.floor(Math.random() * 90000000) + 10000000;
   b = Math.floor(Math.random() * 9000000) + 1000000;
 
-} else if (level >= 11 && level <= 19) {
+} else if (level >= 11 && level <= 14) {
+  op = '+';
+  a = Math.floor(Math.random() * 9000000) + 1000000; 
+  b = Math.floor(Math.random() * 900000) + 100000;
+} else if (level >= 15 && level <= 19) {
   op = '-';
   a = Math.floor(Math.random() * 9000000) + 1000000; 
   b = Math.floor(Math.random() * 900000) + 100000;
@@ -48,7 +52,7 @@ op = '-';
 
 } else if (level >= 31 && level <= 35) {
   op = '/';
- b = Math.floor(Math.random() * 8) + 2; 
+ b = Math.floor(Math.random() * 30) + 20; 
 a = b * (Math.floor(Math.random() * 902) + 99);
 } else if (level >= 36 && level <= 39) {
   op = '/';
