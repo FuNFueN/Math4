@@ -62,3 +62,16 @@ a = b * (Math.floor(Math.random() * 902) + 99);
  op = '/';
 b = Math.floor(Math.random() * 9000) + 900;
 a = b * (Math.floor(Math.random() * 9000) + 1000);
+
+} else if (level >= 41 && level <= 45) {
+  op = '/';
+ b = Math.floor(Math.random() * 30) + 20; 
+a = b * (Math.floor(Math.random() * 902) + 99);
+} else if (level >= 46 && level <= 49) {
+  op = '/';
+  b = Math.floor(Math.random() * 80) + 20; 
+  a = b * (Math.floor(Math.random() * 1000) + 100);
+} else if (level === 50) {
+ op = '/';
+b = Math.floor(Math.random() * 9000) + 900;
+a = b * (Math.floor(Math.random() * 9000) + 1000);
