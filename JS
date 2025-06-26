@@ -1,7 +1,15 @@
 // ===================================
 // 🧱 1. Configuration & Global Variables
 // ===================================
-const firebaseConfig = { ... };
+const firebaseConfig = {
+  apiKey: "AIzaSyDUsBD_dwqR4Y466sA4lXukPA3hqk5-KJY",
+  authDomain: "math-p4.firebaseapp.com",
+  databaseURL: "https://math-p4-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "math-p4",
+  storageBucket: "math-p4.appspot.com",
+  messagingSenderId: "937474922058",
+  appId: "1:937474922058:web:aad038e45ec5b5847bf8b3"
+};
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -137,6 +145,9 @@ function startFlexibleTimer(level) {
       }, 1500);
     }
   }, 1000);
+}
+function updateTimerDisplay() {
+  document.getElementById("timer").textContent = `⏱ ${timeLeft}`;
 }
 
 // ===================================
@@ -901,6 +912,37 @@ function renderMultipleChoice(question, choices) {
     btn.onclick = () => checkChoiceAnswer(choices[idx]);
   });
 }
+function showMultipleChoice(correctAnswer) {
+  const container = document.getElementById("multiple-choice");
+  const input = document.getElementById("answer-input"); // input แบบเดิม
+  const buttons = container.querySelectorAll(".choice-btn");
+
+  // ซ่อน input และแสดงปุ่ม
+  input.style.display = "none";
+  container.style.display = "block";
+
+  // สร้างตัวเลือกแบบสุ่ม
+  const choices = new Set([correctAnswer]);
+  while (choices.size < 4) {
+    const fake = correctAnswer + Math.floor(Math.random() * 20 - 10);
+    choices.add(fake);
+  }
+
+  // สุ่มเรียงลำดับ
+  const shuffled = Array.from(choices).sort(() => Math.random() - 0.5);
+
+  // ผูกปุ่ม
+  buttons.forEach((btn, idx) => {
+    btn.textContent = shuffled[idx];
+    btn.onclick = () => {
+      if (shuffled[idx] == correctAnswer) {
+        handleCorrectAnswer(); // ฟังก์ชันตอบถูก
+      } else {
+        handleWrongAnswer(); // ฟังก์ชันตอบผิด
+      }
+    };
+  });
+}
 
 // ===================================
 // 🧰 7. Inventory & Item System
@@ -1521,6 +1563,9 @@ document.getElementById("retryBtn").addEventListener("click", () => {
     timeUp = false;
     generateQuestion();
   });
+window.onload = function() {
+  window.scrollTo(0, 0);
+};
 
 // Firebase Connection Watcher
 firebase.database().ref(".info/connected").on("value", function(snapshot) {
