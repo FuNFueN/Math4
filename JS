@@ -1,3 +1,167 @@
+// ===================================
+// 🧱 1. Configuration & Global Variables
+// ===================================
+const firebaseConfig = { ... };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let playerName = '';
+let score = 0;
+let level = 1;
+let subLevel = 0;
+const maxMaxHp = 10;
+let hp = 4;
+let maxHp = 7;
+let answer = 0;
+let currentAnswer = '';
+let correctCount = 0;
+let timer;
+let timeLeft = 30;
+let timerId = null;
+let timeUp = false;
+let alreadyEnded = false;
+let hasShownLevelMessage = false;
+let reviveItemUsed = false;
+let lastShownLevelMessage = null;
+let lastLevelMessageShown = null;
+let bossShakeInterval = null;
+let bossShakingTimeout = null;
+let currentShakingLevel = null;
+let inventory = [];
+let isSubmitting = false;
+
+const levelTimerMap = { 50: 40, 60: 40, 100: 40 };
+const bossLevels = [10, 20, 30, 40, 50, 60, 70];
+
+const bossData = { ... };
+const bossImageURLs = { ... };
+const bossImages = { ... };
+const bossEffects = { ... };
+
+// ===================================
+// 🎮 2. Game Lifecycle Functions
+// ===================================
+function updateUI() {
+  document.getElementById("score").textContent = score;
+ document.getElementById("hearts").innerHTML = "❤️".repeat(hp) + "🤍".repeat(maxHp - hp);
+  document.getElementById("levelTitle").textContent = `ชั้นที่ ${level}`;
+}
+function updateHearts() {
+  console.log("🔍 updateHearts called — maxHp =", maxHp, "hp =", hp);
+  const heartsEl = document.getElementById("hearts");
+  heartsEl.innerHTML = "❤️".repeat(hp) + "🤍".repeat(maxHp - hp);
+}
+function updateInventoryUI() {
+  const itemList = document.getElementById("item-list");
+  itemList.innerHTML = "";
+
+  inventory.forEach((item, index) => {
+    const li = document.createElement("li");
+    li.textContent = item === "❤️" ? "❤️ เพิ่มเลือด" : "💎 เพิ่ม Max HP";
+    li.style.cursor = "pointer";
+    li.addEventListener("click", () => useItem(index));
+    itemList.appendChild(li);
+  });
+}
+function startGame() { ... }
+function endGame() { ... }
+
+// ===================================
+// ⏱ 3. Timer Functions
+// ===================================
+function startTimer(seconds, onTimeout) {
+  let remaining = seconds;
+  const timerEl = document.getElementById("timer");
+  const submitBtn = document.getElementById("submitBtn");
+  const retryBtn = document.getElementById("retryBtn");
+  const feedback = document.getElementById("feedback");
+
+  timeUp = false;
+  submitBtn.disabled = false;
+  retryBtn.style.display = "none";
+
+  timerEl.textContent = `⏱ ${remaining}s`;
+
+  timerId = setInterval(() => {
+    remaining--;
+    timerEl.textContent = `⏱ ${remaining}s`;
+
+    if (remaining <= 0) {
+      clearInterval(timerId);
+      timeUp = true;
+
+      hp--; // ✅ หัก HP เมื่อหมดเวลา
+      updateHearts();
+
+      timerEl.textContent = "⏰ หมดเวลาแล้ว!";
+      feedback.textContent = `⏳ หมดเวลา! กรุณากดปุ่มลองใหม่`;
+
+      submitBtn.disabled = true;
+      retryBtn.style.display = "inline-block";
+
+      if (hp <= 0) {
+        saveScore(() => {
+          alert(`จบเกมท่านร่วงล่นจากหอคอย! พลังความรู้: ${score}`);
+           endGame();
+        });
+        return;
+      }
+
+      if (typeof onTimeout === 'function') onTimeout(); // ✅ เรียกต่อ
+    }
+  }, 1000);
+}
+function startFlexibleTimer(level) {
+  if (timerId) clearInterval(timerId); // เคลียร์ timer เก่า
+  const duration = levelTimerMap[level] || 10;
+  let timeLeft = duration;
+
+  document.getElementById("timer").textContent = `⏱ ${timeLeft}s`;
+
+  timerId = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").textContent = `⏱ ${timeLeft}s`;
+
+    if (timeLeft <= 0) {
+      clearInterval(timerId);
+      document.getElementById("feedback").textContent = `⏳ หมดเวลา! คำตอบคือ ${currentAnswer}`;
+      hp--;
+      updateHearts();
+      setTimeout(() => {
+        if (hp > 0) {
+          level++;
+          generateQuestion();
+        } else {
+          endGame();
+        }
+      }, 1500);
+    }
+  }, 1000);
+}
+
+// ===================================
+// ❓ 4. Question Generation
+// ===================================
+function generateQuestion() {
+
+  updateThemeByLevel(level);
+const container = document.getElementById("question-grid");
+  const body = document.body;
+  container.innerHTML = '';
+  let a = 0, b = 0, op = '+';
+  
+
+  if (isBossLevel(level)) {
+  showBoss(level);
+} else {
+  document.getElementById("bossArea").style.display = "none";
+}
+   if (isBossLevel(level)) {
+    showBoss(level); // แสดงบอสเฉพาะเวลาที่อยู่ชั้นบอส
+  } else {
+    hideBoss(); // ซ่อนบอส
+  }
+
 if (level === 1) {
   op = '+';
   a = Math.floor(Math.random() * 90000) + 10000;
@@ -70,254 +234,1297 @@ op = '-';
   op = '-';
   a = Math.floor(Math.random() * 90000000) + 10000000;
   b = Math.floor(Math.random() * 9000000) + 1000000;
-
-} else if (level === 50) {
-  const q = generateTwoStepPlusMinus();
-  expression = q.expression;
-  answer = currentAnswer = q.answer;
-  renderHorizontalTwoStep(expression);
-
-  if (levelTimerMap[level]) {
-    startTimer(levelTimerMap[level], () => {
-      document.getElementById("feedback").textContent = `⏳ หมดเวลา! คำตอบคือ ${answer}`;
-      hp--;
-      updateHearts();
-      setTimeout(() => {
-        if (hp > 0) {
-          level++;
-          generateQuestion();
-        } else {
-          endGame();
-        }
-      }, 1500);
-    });
+}
+  if (level >= 1 && level <= 49) {
+    let result = 0;
+    switch (op) {
+      case '+': result = a + b; break;
+      case '-': result = a - b; break;
+      case '*': result = a * b; break;
+      case '/': result = a / b; break;
+    }
+    currentAnswer = result.toString();
+    console.log("โจทย์:", a, op, b, "คำตอบที่ถูก:", currentAnswer);
+    renderVerticalOperation(a, b, op);
+showLevelMessage(level);
+    if (levelTimerMap[level]) {
+      startTimer(levelTimerMap[level], () => {
+        document.getElementById("feedback").textContent = `⏳ หมดเวลา! คำตอบคือ ${currentAnswer}`;
+        hp--;
+        updateHearts();
+        setTimeout(() => {
+          if (hp > 0) {
+            level++;
+            generateQuestion();
+          } else {
+            endGame();
+          }
+        }, 1500);
+      });
+    }
+    return;
+  }
+  if (level === 50) {
+    const q = generateTwoStepPlusMinus();
+    expression = q.expression;
+    answer = currentAnswer = q.answer;
+    renderHorizontalTwoStep(expression);
+    if (levelTimerMap[level]) {
+      startTimer(levelTimerMap[level], () => {
+        document.getElementById("feedback").textContent = `⏳ หมดเวลา! คำตอบคือ ${answer}`;
+        hp--;
+        updateHearts();
+        setTimeout(() => {
+          if (hp > 0) {
+            level++;
+            generateQuestion();
+          } else {
+            endGame();
+          }
+        }, 1500);
+      });
+    }
+    return;
   }
 
-  return;
-} else if (level >= 51 && level <= 53) { 
-  const q = generateDecimalAddition();
-  answer = q.answer;
-  currentAnswer = answer;
-  renderVerticalDecimalOperation(q.a, q.b, q.operator);
-  return;
-} else if (level >= 54 && level <= 55) { 
-  const q = generateDecimalSubtraction();
-  answer = q.answer;
-  currentAnswer = answer;
-  renderVerticalDecimalOperation(q.a, q.b, q.operator);
-  return;
-  } else if (level >= 56 && level <= 57) { 
-  const q = generateDecimalMultiplication();
-  answer = q.answer;
-  currentAnswer = answer;
-  renderVerticalOperation(q.a, q.b, q.operator); // รองรับ * แนวตั้ง
-  return;
-} else if (level >= 56 && level <= 57) { 
-  const q = generateDecimalMultiplication();
-  answer = q.answer;
-  currentAnswer = answer;
-  renderVerticalOperation(q.a, q.b, q.operator); // รองรับ * แนวตั้ง
-  return;
-} else if (level >= 58 && level <= 59) {
-  const q = generateDecimalDivision();
-  answer = q.answer;
-  currentAnswer = answer;
-  renderVerticalOperation(q.a, q.b, q.operator); // รองรับ / แนวนอน
-  return;  
-} else if (level === 60) {
-  const q = generateDecimalAddition();
-  answer = currentAnswer = q.answer;
-  renderVerticalDecimalOperation(q.a, q.b, q.operator);
-
-  if (levelTimerMap[level]) {
-    startTimer(levelTimerMap[level], () => {
-      document.getElementById("feedback").textContent = `⏳ หมดเวลา! คำตอบคือ ${answer}`;
-      hp--;
-      updateHearts();
-      setTimeout(() => {
-        if (hp > 0) {
-          level++;
-          generateQuestion();
-        } else {
-          endGame();
-        }
-      }, 1500);
-    });
+  if (level >= 51 && level <= 53) {
+    clearInterval(timer); // ✅ หยุดตัวนับก่อนหน้า
+    document.getElementById("timer").textContent = "";
+    const q = generateDecimalAddition();
+    answer = currentAnswer = q.answer;
+    renderVerticalDecimalOperation(q.a, q.b, q.operator);
+    return;
   }
 
+  if (level >= 54 && level <= 55) {
+    const q = generateDecimalSubtraction();
+    answer = currentAnswer = q.answer;
+    renderVerticalDecimalOperation(q.a, q.b, q.operator);
+    return;
+  }
+
+  if (level >= 56 && level <= 57) {
+    const q = generateDecimalMultiplication();
+    answer = currentAnswer = q.answer;
+    renderVerticalOperation(q.a, q.b, q.operator);
+    return;
+  }
+
+  if (level >= 58 && level <= 59) {
+    const q = generateDecimalDivision();
+    answer = currentAnswer = q.answer;
+    renderVerticalOperation(q.a, q.b, q.operator);
+    return;
+  }
+
+  if (level === 60) {
+    const q = generateDecimalAddition();
+    answer = currentAnswer = q.answer;
+    renderVerticalDecimalOperation(q.a, q.b, q.operator);
+    if (levelTimerMap[level]) {
+      startTimer(levelTimerMap[level], () => {
+        document.getElementById("feedback").textContent = `⏳ หมดเวลา! คำตอบคือ ${answer}`;
+        hp--;
+        updateHearts();
+        setTimeout(() => {
+          if (hp > 0) {
+            level++;
+            generateQuestion();
+          } else {
+            endGame();
+          }
+        }, 1500);
+      });
+    }
+    return;
+  }
+
+  if (level >= 61 && level <= 80) {
+  clearInterval(timerId); // หยุดตัวจับเวลาเดิม
+  document.getElementById("timer").textContent = ""; // ไม่ต้องแสดงเวลา
+  fetchChoiceQuestion(level); // ดึงคำถามช้อยส์มาแสดง
   return;
 }
-  let result = 0;
-  switch (op) {
-    case '+': result = a + b; break;
-    case '-': result = a - b; break;
-    case '*': result = a * b; break;
-    case '/': result = a / b; break;
-  }
-
-  currentAnswer = result.toString();
-  renderVerticalOperation(a, b, op);
-  // ⏱ เริ่มจับเวลาเฉพาะเลเวลที่กำหนด
+  else {
+  generateQuestionByLevel(level);
 }
-  if (level === 1) {
-  op = '+';
-  a = Math.floor(Math.random() * 90000) + 10000;
-  b = Math.floor(Math.random() * 9000) + 1000;
-} else if (level >= 2 && level <= 3) {
-op = '+';
-  a = Math.floor(Math.random() * 900000) + 100000;
-  b = Math.floor(Math.random() * 90000) + 10000;
-} else if (level >= 4 && level <= 5) {
-op = '-';
-  a = Math.floor(Math.random() * 900000) + 100000;
-  b = Math.floor(Math.random() * 90000) + 10000;
-} else if (level >= 6 && level <= 7) {
-op = '*';
-  a = Math.floor(Math.random() * 50) + 20; 
-  b = Math.floor(Math.random() * 50) + 20;
-} else if (level >= 8 && level <=9 ) {
-  op = '/';
- b = Math.floor(Math.random() * 8) + 2; 
- a = b * (Math.floor(Math.random() * 902) + 99);
-} else if (level === 10) {
-op = '+';
-  a = Math.floor(Math.random() * 90000000) + 10000000;
-  b = Math.floor(Math.random() * 9000000) + 1000000;
-
-} else if (level >= 11 && level <= 14) {
-  op = '+';
-  a = Math.floor(Math.random() * 9000000) + 1000000; 
-  b = Math.floor(Math.random() * 900000) + 100000;
-} else if (level >= 15 && level <= 19) {
-  op = '-';
-  a = Math.floor(Math.random() * 9000000) + 1000000; 
-  b = Math.floor(Math.random() * 900000) + 100000;
- } else if (level === 20) {
-op = '-';
-  a = Math.floor(Math.random() * 90000000) + 10000000;
-  b = Math.floor(Math.random() * 9000000) + 1000000;
-
-} else if (level >= 21 && level <= 25) {
-  op = '*';
-  a = Math.floor(Math.random() * 100) + 10; 
-  b = Math.floor(Math.random() * 100) + 10;
- } else if (level >= 26 && level <= 29) {
-  op = '*';
-  a = Math.floor(Math.random() * 1000) + 100; 
-  b = Math.floor(Math.random() * 100) + 10;
- } else if (level === 30) {
- op = '*';
-  a = Math.floor(Math.random() * 9000) + 1000; 
-  b = Math.floor(Math.random() * 900) + 100;
-
-} else if (level >= 31 && level <= 35) {
-  op = '/';
-   b = Math.floor(Math.random() * 30) + 20; 
-  a = b * (Math.floor(Math.random() * 902) + 99);
-} else if (level >= 36 && level <= 39) {
-  op = '/';
-  b = Math.floor(Math.random() * 80) + 20; 
-  a = b * (Math.floor(Math.random() * 1000) + 100);
-} else if (level === 40) {
- op = '/';
- b = Math.floor(Math.random() * 9000) + 900;
- a = b * (Math.floor(Math.random() * 9000) + 1000);
-
-} else if (level >= 41 && level <= 45) {
-  op = '+';
-  a = Math.floor(Math.random() * 90000000) + 10000000;
-  b = Math.floor(Math.random() * 9000000) + 1000000;
-} else if (level >= 46 && level <= 49) {
-  op = '-';
-  a = Math.floor(Math.random() * 90000000) + 10000000;
-  b = Math.floor(Math.random() * 9000000) + 1000000;
-
-} else if (level === 50) {
-  const q = generateTwoStepPlusMinus();
-  expression = q.expression;
-  answer = currentAnswer = q.answer;
-  renderHorizontalTwoStep(expression);
-
-  if (levelTimerMap[level]) {
-    startTimer(levelTimerMap[level], () => {
-      document.getElementById("feedback").textContent = `⏳ หมดเวลา! คำตอบคือ ${answer}`;
-      hp--;
-      updateHearts();
-      setTimeout(() => {
-        if (hp > 0) {
-          level++;
-          generateQuestion();
-        } else {
-          endGame();
-        }
-      }, 1500);
-    });
-  }
-
-  return;
-} else if (level >= 51 && level <= 53) { 
-  const q = generateDecimalAddition();
-  answer = q.answer;
-  currentAnswer = answer;
-  renderVerticalDecimalOperation(q.a, q.b, q.operator);
-  return;
-} else if (level >= 54 && level <= 55) { 
-  const q = generateDecimalSubtraction();
-  answer = q.answer;
-  currentAnswer = answer;
-  renderVerticalDecimalOperation(q.a, q.b, q.operator);
-  return;
-  } else if (level >= 56 && level <= 57) { 
-  const q = generateDecimalMultiplication();
-  answer = q.answer;
-  currentAnswer = answer;
-  renderVerticalOperation(q.a, q.b, q.operator); // รองรับ * แนวตั้ง
-  return;
-} else if (level >= 56 && level <= 57) { 
-  const q = generateDecimalMultiplication();
-  answer = q.answer;
-  currentAnswer = answer;
-  renderVerticalOperation(q.a, q.b, q.operator); // รองรับ * แนวตั้ง
-  return;
-} else if (level >= 58 && level <= 59) {
-  const q = generateDecimalDivision();
-  answer = q.answer;
-  currentAnswer = answer;
-  renderVerticalOperation(q.a, q.b, q.operator); // รองรับ / แนวนอน
-  return;  
-} else if (level === 60) {
-  const q = generateDecimalAddition();
-  answer = currentAnswer = q.answer;
-  renderVerticalDecimalOperation(q.a, q.b, q.operator);
-
-  if (levelTimerMap[level]) {
-    startTimer(levelTimerMap[level], () => {
-      document.getElementById("feedback").textContent = `⏳ หมดเวลา! คำตอบคือ ${answer}`;
-      hp--;
-      updateHearts();
-      setTimeout(() => {
-        if (hp > 0) {
-          level++;
-          generateQuestion();
-        } else {
-          endGame();
-        }
-      }, 1500);
-    });
-  }
-
-  return;
 }
-  let result = 0;
-  switch (op) {
-    case '+': result = a + b; break;
-    case '-': result = a - b; break;
-    case '*': result = a * b; break;
-    case '/': result = a / b; break;
+function generateQuestionByLevel(level) { ... }
+function generateTwoStepAddSub() {
+  // เช่น ให้ทำ + แล้ว - เป็นขั้นตอนเดียว
+  const a = getRandom(100, 999);
+  const b = getRandom(10, 99);
+  const c = getRandom(1, 9);
+  const expression = `${a} + ${b} - ${c}`;
+  const answer = eval(expression).toString();
+  return { expression, answer };
+}
+function generateTwoStepPlusMinus() {
+  const patterns = [
+    ['+', '-'],
+    ['-', '+'],
+    ['+', '+'],
+    ['-', '-']
+  ];
+  const [op1, op2] = patterns[Math.floor(Math.random() * patterns.length)];
+
+  let a = getRandom(100, 999);
+  let b = getRandom(100, 999);
+  let c = getRandom(100, 999);
+
+  // ปรับให้ไม่ติดลบ
+  if (op1 === '-' && a < b) [a, b] = [b, a];
+  const first = eval(`${a} ${op1} ${b}`);
+
+  if (op2 === '-' && first < c) {
+    c = getRandom(0, Math.floor(first)); // ให้ผลไม่ติดลบ
   }
 
-  currentAnswer = result.toString();
-  renderVerticalOperation(a, b, op);
-  // ⏱ เริ่มจับเวลาเฉพาะเลเวลที่กำหนด
+  const expression = `(${a} ${op1} ${b}) ${op2} ${c}`;
+  const answer = eval(expression);
+
+  return {
+    expression,
+    answer: answer.toString()
+  };
 }
+function generateDecimalAddition() {
+  const a = parseFloat((Math.random() * 900 + 100).toFixed(2));
+  const b = parseFloat((Math.random() * 900 + 100).toFixed(2));
+  const answer = parseFloat((a + b).toFixed(2));
+  return { a, b, operator: '+', answer: answer.toString() };
+}
+function generateDecimalSubtraction() {
+  let a = parseFloat((Math.random() * 900 + 100).toFixed(2));
+  let b = parseFloat((Math.random() * 900 + 100).toFixed(2));
+
+  if (b > a) [a, b] = [b, a];
+
+  const answer = parseFloat((a - b).toFixed(2));
+
+  return {
+    a: a,
+    b: b,
+    operator: '-',
+    answer: answer.toString()
+  };
+}
+function generateDecimalSubtraction() { ... }
+function generateDecimalMultiplication() {
+  const a = parseFloat((Math.random() * 90 + 10).toFixed(2)); // 10.00 - 100.00
+  const b = parseFloat((Math.random() * 9 + 1).toFixed(2));   // 1.00 - 10.00
+  const answer = parseFloat((a * b).toFixed(2));
+  return { a, b, operator: '*', answer: answer.toString() };
+}
+function generateDecimalDivision() {
+  let b = parseFloat((Math.random() * 9 + 1).toFixed(1)); // 1.00 - 10.00
+  let result = parseFloat((Math.random() * 90 + 10).toFixed(2)); // ผลลัพธ์ 10.00 - 100.00
+  let a = parseFloat((result * b).toFixed(2)); // ทำให้หารแล้วลงตัว
+  const answer = (a / b).toFixed(2);
+
+  return {
+    a, b, operator: '/', answer: answer.toString()
+  };
+}
+function generateSpecialQuestion(stage, sub) {
+  // ตัวอย่าง: ให้ทำดูตัวอย่างพิเศษแต่ละ stage
+  const q = generateTwoStepPlusMinus(); 
+  currentAnswer = q.answer;
+  renderHorizontalTwoStep(q.expression);
+  startFlexibleTimer(stage);
+} 
+function fetchChoiceQuestion(level) { ... }
+
+// ===================================
+// 🧠 5. Answer Checking
+// ===================================
+function checkAnswer(ans) {
+ console.trace("📍 checkAnswer called");
+  console.log("🟢 [LOG] เรียก checkAnswer ด้วย:", ans);
+  const feedback = document.getElementById("feedback");
+  const userNum = Number(ans);
+  const correctNum = Number(currentAnswer);
+console.log("User:", userNum, "Correct:", correctNum);
+  console.log("Difference:", Math.abs(userNum - correctNum));
+    console.trace("checkAnswer called");
   
+  console.log("🔴 [LOG] แปลงเป็นตัวเลข:", { userNum, correctNum });
+  console.log("🔴 [LOG] ความต่าง:", Math.abs(userNum - correctNum));
+   
+  if (isNaN(userNum)) {
+    console.warn("❌ [ERROR] ค่าที่ใส่ไม่เป็นตัวเลข!");
+    feedback.textContent = "⚠️ กรุณากรอกตัวเลขที่ถูกต้อง";
+    return;
+  }
+  const checkingMessages = [
+  "⏳ กำลังสแกนสมอง...",
+  "🥴 ตอบอะไรไปนะ จะถูกไหมนะ",
+  "📋 เอ้...เหมือนจะดรอปอะไรไหมนะ",
+  "👻 วิญญาณครูคณิตกำลังกระซิบคำตอบ...",
+  "🧙‍♂️ ครูวิทย์กำลังคิดคำตอบให้ รอแปป",
+  "🌪️ สมองคุณกำลังหมุนติ้ววว... รอผลแป๊บ",
+  "👺 เด็กน้อย! เจ้าคิดว่าตอบได้ง่ายๆ รึ?",
+  "👴 ระบบกำลังถามปู่... ปู่ยังหูตึงอยู่",
+  "🧠 ประมวลผลคำตอบ...",
+  "🤔 คิดอยู่นะ...",
+  "🔍 กำลังตรวจสอบความถูกต้อง...",
+  "🔮 ทำนายผลลัพธ์...",
+  "🤖 ระบบกำลังวิเคราะห์คำตอบ..."
+];
+
+const randomMsg = checkingMessages[Math.floor(Math.random() * checkingMessages.length)];
+feedback.textContent = randomMsg;
+feedback.classList.add("pulse-feedback");
+  
+setTimeout(() => {
+  feedback.classList.remove("pulse-feedback");
+  
+  let isCorrect = false;
+  
+  if (level >= 1 && level <= 50) {
+    isCorrect = userNum === correctNum;
+  } else if (level >= 51 && level <= 60) {
+    isCorrect = Math.abs(userNum - correctNum) < 0.01;
+  } 
+  console.log("ระดับ:", level);
+  console.log("User:", userNum, "Correct:", correctNum);
+  console.log("Difference:", Math.abs(userNum - correctNum));
+  console.log("isCorrect:", isCorrect);
+  
+ 
+  
+  if (timerId) {
+    clearInterval(timerId);
+    timerId = null;
+  }
+
+ if (isCorrect) {
+  score += 10;
+  feedback.textContent = "✅ ตอบถูก! ปีนขึ้นไปยังชั้นที่สูงกว่า!";
+  
+  if (level % 10 === 0 && subLevel < 2) {
+    subLevel++;
+  } else {
+    level++;
+    subLevel = 0;
+  }
+  if (lastShownLevelMessage !== level) {
+  showLevelMessage(level);
+  lastShownLevelMessage = level;
+}
+   tryDropItem();
+   if (level === 40) {
+  feedback.textContent += " 👀 จอมมารเริ่มสนใจในตัวท่าน...";
+
+  // เพิ่มคลาส shake และ glow
+  document.body.classList.add("shake-slight", "glow");
+
+  // ลบคลาสหลังจาก 2 วินาที
+  setTimeout(() => {
+    document.body.classList.remove("shake-slight", "glow");
+  }, 2000);
+}
+  if (level === 81) { ///บังคับตาย
+    feedback.textContent = "📉 ระดับความรู้ท่านต่ำเกินไป ท่านร่วงหล่นจากหอคอย";
+    endGame();
+    return;
+  }
+  // ✅ เพิ่มพลังชีวิตทุก ๆ 4 เลเวล (สูงสุด 5)
+  if (level % 4 === 0 && hp < maxHp) {
+    hp++;
+    console.log("🎉 ได้รับพลังชีวิตเพิ่ม! HP =", hp);
+    feedback.textContent += " ❤️ พลังชีวิต +1!";
+  }
+
+} else {
+  hp--;
+  feedback.textContent = `❌ ผิด!ท่านถูกโจมตี คำตอบคือ ${correctNum}`;
+
+  // 🔴 เอฟเฟกต์สั่นตอนเลือดลด
+  document.body.classList.add("shake");
+  setTimeout(() => {
+    document.body.classList.remove("shake");
+  }, 400);
+}
+
+if (hp <= 0 || level > 100) {
+  endGame();
+  return;
+}
+
+ updateUI();
+  updateHighscoreIfNeeded();
+      generateQuestion();
+  }, 2000); // ←<< ปิด setTimeout ตรงนี้
+}
+function checkAnswerFromInputs() {
+  // ตรวจว่ามีช่อง .final-answer หรือไม่
+  const finalAnswerInputs = document.querySelectorAll("#question-grid input.final-answer");
+  const regularInputs = document.querySelectorAll("#question-grid input:not([readonly])");
+
+  // ถ้ามีช่อง final-answer ใช้อันนั้น, ถ้าไม่มี ใช้ input ทั้งหมด
+  const inputs = finalAnswerInputs.length > 0 ? finalAnswerInputs : regularInputs;
+
+  let value = "";
+  inputs.forEach((input) => value += input.value.trim());
+
+  if (!value || isNaN(value)) {
+    const feedback = document.getElementById("feedback");
+    if (feedback) feedback.textContent = "⚠️ กรุณากรอกตัวเลขที่ถูกต้อง!";
+    return;
+  }
+  console.log("ค่าที่กรอกจาก input:", value);
+  checkAnswer(value);
+}
+function endGame() {
+  if (alreadyEnded) return;
+  alreadyEnded = true;
+
+  const timestamp = Date.now();
+  const gameStats = {
+    name: playerName,
+    score: score,
+    level: level,
+    result: hp <= 0 ? "Game Over" : "Completed",
+    timestamp: timestamp
+  };
+
+  // 🟡 เก็บสถิติลง Firebase
+  db.ref("tower-history/" + playerName + "/" + timestamp).set(gameStats)
+    .then(() => {
+      console.log("สถิติถูกบันทึกแล้ว");
+
+      // 🎯 แล้วค่อย saveScore สำหรับ leaderboard
+      saveScore(() => {
+        alert(`จบเกม! ท่านร่วงหล่นจากหอคอย พลังความรู้: ${score}`);
+
+        document.getElementById("game").style.display = "none";
+        document.getElementById("login-screen").style.display = "block";
+
+        // รีเซ็ตค่า
+        score = 0;
+        level = 1;
+        hp = 3;
+        timeUp = false;
+        subLevel = 0;
+        updateUI();
+        updateHearts();
+
+        alreadyEnded = false;
+      });
+    })
+    .catch((error) => {
+      console.error("เกิดข้อผิดพลาดในการบันทึกสถิติ: ", error);
+      alreadyEnded = false;
+    });
+}
+// ✅ ตรวจสอบคำตอบ
+function checkChoiceAnswer(selected) {
+  const feedback = document.getElementById("feedback");
+
+  if (selected == currentAnswer) {
+    score += 10;
+    level++;
+    feedback.textContent = "✅ ตอบถูก! ปีนขึ้นไปยังชั้นที่สูงกว่า!";
+  } else {
+    hp--;
+    feedback.textContent = `❌ ผิด!ท่านถูกโจมตี คำตอบคือ ${currentAnswer}`;
+  }
+
+  if (hp <= 0 || level > 100) {
+    endGame();
+    return;
+  }
+
+  updateUI();
+  setTimeout(generateQuestion, 1000);
+}
+
+// ===================================
+// ✍️ 6. Rendering Functions
+// ===================================
+function renderVerticalOperation(a, b, operator) {
+  const container = document.getElementById("question-grid");
+  container.innerHTML = '';
+  const maxLength = 11;
+    container.className = ''; 
+  if (operator === '+' || operator === '-') {
+  container.classList.add('math-grid');
+
+  const isDecimal = a % 1 !== 0 || b % 1 !== 0;
+  const aFormatted = isDecimal ? a.toFixed(2) : a.toString();
+  const bFormatted = isDecimal ? b.toFixed(2) : b.toString();
+
+  const aStr = aFormatted.padStart(maxLength, ' ').split('');
+  const bStr = bFormatted.padStart(maxLength - 1, ' ').split('');
+
+  // บรรทัดที่ 1: ตัวตั้ง
+  aStr.forEach(d => {
+    const cell = document.createElement('div');
+    cell.className = 'math-cell';
+    cell.textContent = d.trim();
+    container.appendChild(cell);
+  });
+
+  // บรรทัดที่ 2: ตัวล่างพร้อม operator
+  const opRow = [operator, ...bStr];
+  opRow.slice(0, maxLength).forEach(d => {
+    const cell = document.createElement('div');
+    cell.className = 'math-cell';
+    cell.textContent = d.trim();
+    container.appendChild(cell);
+  });
+
+  // บรรทัดที่ 3: ช่องกรอกคำตอบ
+  for (let i = 0; i < maxLength; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'math-cell';
+    cell.innerHTML = `<input maxlength="1" style="width:100%; border:none; text-align:center;">`;
+    container.appendChild(cell);
+  }
+}
+  else if (operator === '*') {
+  container.classList.add('math-grid');
+
+  const isDecimal = a % 1 !== 0 || b % 1 !== 0;
+  const aFormatted = isDecimal ? a.toFixed(2) : a.toString();
+  const bFormatted = isDecimal ? b.toFixed(2) : b.toString();
+
+  const aStr = aFormatted.padStart(maxLength, ' ').split('');
+  const bStr = bFormatted.padStart(maxLength - 1, ' ').split('');
+  const multiplierDigits = bFormatted.replace('.', '').split('').reverse();
+
+  // บรรทัดที่ 1: ตัวตั้ง
+  aStr.forEach(d => {
+    const cell = document.createElement('div');
+    cell.className = 'math-cell';
+    cell.textContent = d.trim();
+    container.appendChild(cell);
+  });
+
+  // บรรทัดที่ 2: ตัวคูณพร้อม operator
+  const row2 = [operator, ...bStr];
+  row2.slice(0, maxLength).forEach(d => {
+    const cell = document.createElement('div');
+    cell.className = 'math-cell';
+    cell.textContent = d.trim();
+    container.appendChild(cell);
+  });
+
+  // บรรทัดการคูณย่อย
+  multiplierDigits.forEach((digit, i) => {
+    const row = new Array(maxLength).fill('');
+    const partialProduct = (a * parseFloat(digit)).toString().split('').reverse();
+
+    for (let j = 0; j < partialProduct.length; j++) {
+      const index = maxLength - 1 - j - i;
+      if (index >= 0) row[index] = ''; // ช่องเปล่าให้กรอกเอง
+    }
+
+    row.forEach(() => {
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.innerHTML = `<input maxlength="1" style="width:100%; border:none; text-align:center;">`;
+      container.appendChild(cell);
+    });
+  });
+
+  // แถวสุดท้าย: ผลรวม
+  for (let i = 0; i < maxLength; i++) {
+  const cell = document.createElement('div');
+  cell.className = 'math-cell';
+  cell.innerHTML = `<input class="final-answer" maxlength="1" style="width:100%; border:none; text-align:center;">`;
+  container.appendChild(cell);
+}
+    
+  } else if (operator === '/') {
+  container.classList.add('horizontal-layout');
+  const wrapper = document.createElement("div");
+  wrapper.style.display = "flex";
+  wrapper.style.justifyContent = "center";
+  wrapper.style.alignItems = "center";
+  wrapper.style.flexWrap = "wrap";
+  wrapper.style.gap = "10px";
+  wrapper.style.fontSize = "28px";
+  wrapper.style.color = "black";
+
+  const isDecimal = a % 1 !== 0 || b % 1 !== 0;
+  const aFormatted = isDecimal ? a.toFixed(2) : a.toString();
+  const bFormatted = isDecimal ? b.toFixed(2) : b.toString();
+
+  const label = document.createElement("span");
+  label.textContent = `${aFormatted} ÷ ${bFormatted} =`;
+  label.style.color = "black";
+
+  const input = document.createElement("input");
+  input.setAttribute("inputmode", "decimal");
+  input.setAttribute("maxlength", "12");
+  input.style.fontSize = "24px";
+  input.style.textAlign = "center";
+  input.style.border = "none";
+  input.style.borderBottom = "2px solid black";
+  input.style.color = "black";
+  input.style.background = "white";
+  input.style.width = "120px";
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") checkAnswer(input.value.trim());
+  });
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(input);
+  container.appendChild(wrapper);
+
+  currentAnswer = (a / b).toFixed(2); // รองรับการตรวจแบบทศนิยม
+}
+}
+const sheetUrl = "https://opensheet.vercel.app/1ZhBlwzfeGMHY9OcBbLDp3Iyn7m46WxV6yJNfNqYTVvg/Sheet1";
+function renderHorizontalTwoStep(expression) {
+  const container = document.getElementById("question-grid");
+  container.innerHTML = '';
+  container.className = 'horizontal-layout';
+
+  const wrapper = document.createElement("div");
+  wrapper.style.display = "flex";
+  wrapper.style.justifyContent = "center";
+  wrapper.style.alignItems = "center";
+  wrapper.style.flexWrap = "wrap";
+  wrapper.style.gap = "10px";
+  wrapper.style.fontSize = "28px";
+  wrapper.style.color = "black";
+
+  const label = document.createElement("span");
+  label.textContent = `${expression} =`;
+  label.style.color = "black";
+
+  const input = document.createElement("input");
+  input.setAttribute("inputmode", "decimal");
+  input.setAttribute("maxlength", "12");
+  input.style.fontSize = "24px";
+  input.style.textAlign = "center";
+  input.style.border = "none";
+  input.style.borderBottom = "2px solid black";
+  input.style.background = "white";
+  input.style.width = "120px";
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") checkAnswer(input.value.trim());
+  });
+
+  wrapper.appendChild(label);
+  wrapper.appendChild(input);
+  container.appendChild(wrapper);
+}
+function renderVerticalDecimalOperation(a, b, operator) {
+  const container = document.getElementById("question-grid");
+  container.innerHTML = '';
+  container.className = 'math-grid';
+
+  const maxLength = 11;
+
+  // จัด format ให้อยู่ในรูปแบบทศนิยม 2 ตำแหน่ง
+  const aStr = a.toFixed(2).padStart(maxLength, ' ').split('');
+  const bStr = b.toFixed(2).padStart(maxLength - 1, ' ').split('');
+
+  // บรรทัดที่ 1: ตัวตั้ง
+  aStr.forEach(d => {
+    const cell = document.createElement('div');
+    cell.className = 'math-cell';
+    cell.textContent = d.trim();
+    container.appendChild(cell);
+  });
+
+  // บรรทัดที่ 2: ตัวล่าง + เครื่องหมาย
+  const opRow = [operator, ...bStr];
+  opRow.slice(0, maxLength).forEach(d => {
+    const cell = document.createElement('div');
+    cell.className = 'math-cell';
+    cell.textContent = d.trim();
+    container.appendChild(cell);
+  });
+
+  // บรรทัดที่ 3: ช่องกรอกคำตอบ
+  for (let i = 0; i < maxLength; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'math-cell';
+    cell.innerHTML = `<input maxlength="1" style="width:100%; border:none; text-align:center;">`;
+    container.appendChild(cell);
+  }
+}
+function renderChoiceQuestion(q) {
+  document.getElementById("question-grid").innerHTML = q.question;
+
+  const raw = [q.choice1, q.choice2, q.choice3, q.choice4, q.choice5].filter(c => c);
+  const shuffled = raw.sort(() => Math.random() - 0.5);
+
+  const buttons = document.querySelectorAll(".choice-btn");
+  document.getElementById("multiple-choice").style.display = "block";
+  buttons.forEach((btn, i) => {
+    if (shuffled[i]) {
+      btn.style.display = "inline-block";
+      btn.textContent = shuffled[i];
+      btn.disabled = false;
+      btn.onclick = () => {
+        if (shuffled[i] === q.correct) {
+          score += 10;
+          level++;
+          feedback.textContent = "✅ ตอบถูก! ปีนขึ้นไปยังชั้นที่สูงกว่า!";
+        } else {
+          hp--;
+          feedback.textContent = `❌ ผิด!ท่านถูกโจมตี คำตอบคือ ${q.correct}`;
+        }
+        updateUI();
+        document.getElementById("multiple-choice").style.display = "none";
+        setTimeout(() => hp > 0 ? generateQuestion() : endGame(), 500);
+      };
+    } else {
+      btn.style.display = "none";
+    }
+  });
+}
+function renderMultipleChoice(question, choices) {
+  const qDiv = document.getElementById("question-grid");
+
+  // 🔧 แก้ style ที่ทำให้แนวตั้ง
+  qDiv.style.writingMode = "horizontal-tb";
+  qDiv.style.whiteSpace = "normal";
+  qDiv.style.display = "block";
+
+  qDiv.innerHTML = `<div style="font-size: 20px; margin-bottom: 10px;">${question}</div>`;
+
+  const choiceDiv = document.getElementById("multiple-choice");
+  const buttons = choiceDiv.querySelectorAll(".choice-btn");
+  choiceDiv.style.display = "block";
+
+  buttons.forEach((btn, idx) => {
+    btn.textContent = choices[idx];
+    btn.onclick = () => checkChoiceAnswer(choices[idx]);
+  });
+}
+
+// ===================================
+// 🧰 7. Inventory & Item System
+// ===================================
+function tryDropItem() {
+  const dropChance = Math.random();
+
+  // 🧠 หยั่งรู้ – 1%
+  if (dropChance < 0.01) {
+    inventory.push("🧠");
+    showItemDrop("🧠 ได้รับไอเทม ‘หยั่งรู้’!");
+  
+  // 🧪 ชุบชีวิต – 1% ถึง 3%
+  } else if (dropChance < 0.03) {
+    inventory.push("🧪");
+    showItemDrop("🧪 ได้รับไอเทม ‘ชุบชีวิต’!");
+  
+  } else if (chance < 0.07) {
+    addItem("🎁 กล่องสุ่ม");
+  
+  
+  // 🕒 บัตรชั่วโมง – 3% ถึง 5% (เฉพาะด่าน 6 ขึ้นไป)
+  } else if (dropChance < 0.05 && level >= 6) {
+    inventory.push("🕒");
+    showItemDrop("🕒 ได้รับไอเทม ‘บัตรชั่วโมง’!");
+    
+
+  // ❤️ หรือ 💎 (เพิ่มเลือด / เพิ่ม MaxHP) – 5% ถึง 10%
+  } else if (dropChance < 0.10) {
+    const itemType = Math.random() < 0.5 ? "hp" : "maxHp";
+
+    if (itemType === "hp") {
+      inventory.push("❤️");
+      showItemDrop("❤️ ได้รับไอเทมเพิ่มเลือด!");
+    } else if (maxHp < maxMaxHp) {
+      inventory.push("💎");
+      showItemDrop("💎 ได้รับไอเทมเพิ่มขีดพลังชีวิต!");
+    } else {
+      // ถ้า Max HP เต็มแล้ว ให้ดรอปเลือดแทน
+      inventory.push("❤️");
+      showItemDrop("❤️ ได้รับไอเทมเพิ่มเลือด!");
+    }
+  }
+
+  updateInventoryUI();
+}
+function useItem(index) {
+  const item = inventory[index];
+
+  if (item === "❤️" && hp < maxHp) {
+    hp++;
+    showItemDrop("💖 ใช้ไอเทมเพิ่มเลือด +1");
+  } else if (item === "💎" && maxHp < maxMaxHp) {
+    maxHp++;
+    hp++; // เพิ่มเลือดทันทีด้วย
+    showItemDrop("✨ Max HP +1 และเพิ่มเลือด");
+  } else if (item === "🧠 หยั่งรู้") {
+    showItemDrop(`🧠 เฉลยคำตอบ: ${currentAnswer}`);
+  } else if (item === "🧪 ชุบชีวิต") {
+    reviveItemUsed = true;
+    showItemDrop("🧪 ชุบชีวิต! จะรอดจากความตาย 1 ครั้ง");
+  } else if (item === "🕒 บัตรชั่วโมง") {
+    showItemDrop("⛔ ไอเทมบัตรชั่วโมงไม่สามารถใช้ได้ตอนนี้");
+    return; // ❗ ป้องกันการลบไอเทม
+  } else if (item === "🎁 กล่องสุ่ม") {
+    useMysteryBox(); // ใช้งานกล่องสุ่ม
+  } else {
+    showItemDrop("⛔ ใช้ไอเทมนี้ไม่ได้");
+    return;
+  }
+
+  // ลบไอเทมหลังจากใช้สำเร็จ
+  inventory.splice(index, 1);
+  updateInventoryUI();
+  updateUI();
+}
+function showItemDrop(text) {
+  const popup = document.getElementById("itemDropPopup");
+  popup.textContent = text;
+  popup.style.display = "block";
+
+  // เรียก animation ใหม่โดยรีเซ็ต class
+  popup.classList.remove("item-drop-popup");
+  void popup.offsetWidth; // trick รีเฟรช animation
+  popup.classList.add("item-drop-popup");
+
+  // ซ่อน popup หลัง 2 วิ
+  setTimeout(() => {
+    popup.style.display = "none";
+  }, 2000);
+}
+function useMysteryBox() {
+  const outcomes = [
+        { emoji: "😢", message: "แห้ววววววว~", action: () => {} } // ไม่มีอะไรเกิดขึ้น
+  ];
+
+  const result = outcomes[Math.floor(Math.random() * outcomes.length)];
+  result.action();
+  showItemDrop(`${result.emoji} ${result.message}`);
+  updateHearts();
+  updateInventoryUI();
+}
+
+// ===================================
+// 📊 8. Firebase Functions
+// ===================================
+function saveScore(callback) {
+  const ref = db.ref("tower-leaderboard/" + playerName);
+  ref.set({
+    name: playerName,
+    score: score,
+    level: level,
+    timestamp: Date.now()
+  }).then(() => {
+    updateLeaderboard(); // ✅ เรียกอัปเดตกระดานผู้นำหลังบันทึก
+    if (callback) callback();
+  });
+}
+function updateHighscoreIfNeeded(callback) {
+  const ref = db.ref("tower-leaderboard/" + playerName);
+
+  ref.once("value").then(snapshot => {
+    const existing = snapshot.val();
+    const prevScore = existing?.score || 0;
+
+    if (score > prevScore) {
+      ref.set({
+        name: playerName,
+        score: score,
+        level: level,
+        timestamp: Date.now()
+      }).then(() => {
+        updateLeaderboard();
+        if (callback) callback();
+      });
+    } else {
+      if (callback) callback(); // ไม่อัปเดต แต่ยังทำ callback ต่อได้
+    }
+  });
+}
+async function fetchChoiceQuestion(level) {
+  const url = "https://opensheet.vercel.app/1ZhBlwzfeGMHY9OcBbLDp3Iyn7m46WxV6yJNfNqYTVvg/Sheet1";
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const item = data[Math.floor(Math.random() * data.length)];
+    if (!item) return;
+
+    const allChoices = shuffle([
+  item.correct,
+  item.choice1,
+  item.choice2,
+  item.choice3,
+  item.choice4,
+  item.choice5,
+].filter(Boolean));
+
+    currentAnswer = item.correct;
+    renderMultipleChoice(item.question, allChoices);
+    document.getElementById("submitBtn").style.display = "none";
+  } catch (err) {
+    console.error("Error fetching multiple choice question:", err);
+  }
+}
+function updateLeaderboard() {
+  const list = document.getElementById("leaderboard-list");
+  const boardRef = db.ref("tower-leaderboard");
+
+  boardRef.once("value", snapshot => {
+    const entries = [];
+
+    snapshot.forEach(child => {
+      const val = child.val();
+      if (val && typeof val.score === "number") {
+        entries.push(val);
+      }
+    });
+
+    // เรียงคะแนนจากมากไปน้อย
+    entries.sort((a, b) => b.score - a.score);
+
+    // ล้างรายการก่อนแสดงใหม่
+    list.innerHTML = "";
+
+    const medals = ["🥇", "🥈", "🥉"];
+
+    entries.slice(0, 10).forEach((entry, index) => {
+      const li = document.createElement("li");
+      li.style.marginBottom = "6px";
+
+      const rank = medals[index] || `${index + 1}.`;
+
+      const topLineClass = `rank-${index + 1}`;
+li.innerHTML = `
+  <div class="top-line ${topLineClass}">
+    ${rank} ${entry.name}
+  </div>
+  <div class="bottom-line">
+    พลังความรู้: ${entry.score} ชั้นที่: ${entry.level}
+  </div>
+`;
+
+      list.appendChild(li);
+    });
+  });
+}
+
+// ===================================
+// 🧪 9. Boss Functions
+// ===================================
+function isBossLevel(lv){ return bossLevels.includes(lv); 
+   }
+function showBoss(level) {
+  const boss = bossData[level];
+  if (!boss) return;
+
+  const bossArea = document.getElementById("bossArea");
+  const bossImgURL = bossImageURLs[level] || ""; // fallback ถ้าไม่มี URL
+
+  bossArea.innerHTML = `
+    <div class="boss-frame ${boss.effect}">
+      <img src="${bossImgURL}" alt="${boss.name}" class="boss-img">
+      <div class="boss-name">👹 ${boss.name}</div>
+      <div class="boss-theme">ตอบถูก 3 ครั้งเพื่อฆ่าบอส</div>
+    </div>
+  `;
+  bossArea.style.display = "block";
+}
+function hideBoss(){ document.getElementById("bossArea").style.display="none"; }
+function updateThemeByLevel(level){
+  const body = document.body;
+  const stageNameEl = document.getElementById("stageName");
+  const bossArea = document.getElementById("bossArea");
+  const bossImage = document.getElementById("bossImage");
+
+  // ลบธีมเก่าและ boss-mode
+  for (let i = 1; i <= 20; i++) {
+    body.classList.remove(`theme${i}`);
+  }
+  body.classList.remove("boss-mode");
+
+  // ธีมแต่ละชั้น
+  if (level <= 5) {
+    body.classList.add('theme1');
+    stageNameEl.textContent = "หมู่บ้านฝึกหัด";
+  } else if (level <= 9) {
+    body.classList.add('theme2');
+    stageNameEl.textContent = "ทุ่งสวิว";
+  } else if (level <= 14) {
+    body.classList.add('theme3');
+    stageNameEl.textContent = "เสาหินทมิฬ";
+  } else if (level <= 19) {
+    body.classList.add('theme4');
+    stageNameEl.textContent = "บึงพิษ";
+  } else if (level <= 24) {
+    body.classList.add('theme5');
+    stageNameEl.textContent = "ยอดเขาน้ำแข็ง";
+  } else if (level <= 29) {
+    body.classList.add('theme6');
+    stageNameEl.textContent = "ลาวาร้อน";
+  } else if (level <= 34) {
+    body.classList.add('theme7');
+    stageNameEl.textContent = "ลานวิญญาณ";
+  } else if (level <= 39) {
+    body.classList.add('theme8');
+    stageNameEl.textContent = "หอคอยมืด";
+  } else if (level <= 45) {
+    body.classList.add('theme9');
+    stageNameEl.textContent = "ชั้นกลางของหอคอยแห่งความหวัง";
+  } else if (level <= 49) {
+    body.classList.add('theme10');
+    stageNameEl.textContent = "หมู่บ้านชั้นกลาง";
+  } else if (level <= 55) {
+    body.classList.add('theme11');
+    stageNameEl.textContent = "เรือบิน";
+  } else if (level <= 59) {
+    body.classList.add('theme12');
+    stageNameEl.textContent = "สกายเปีย";
+  } else if (level === 60) {
+    body.classList.add('theme13');
+    stageNameEl.textContent = "วิหารฟ้าผ่า";
+  } else if (level <= 69) {
+    body.classList.add('theme14');
+    stageNameEl.textContent = "อาณาจักรวิทย์";
+  } else if (level <= 79) {
+    body.classList.add('theme15');
+    stageNameEl.textContent = "ห้องแห่งมายา";
+  } else if (level <= 80) {
+    body.classList.add('theme16');
+    stageNameEl.textContent = "ว่าง";
+  } else if (level <= 82) {
+    body.classList.add('theme17');
+    stageNameEl.textContent = "ว่าง";
+  } else if (level <= 84) {
+    body.classList.add('theme18');
+    stageNameEl.textContent = "ว่าง";
+  } else {
+    body.classList.add('theme19');
+    stageNameEl.textContent = "ว่าง";
+  }
+if (isBossLevel(level)) {
+  body.classList.add("boss-mode");
+
+  if (currentShakingLevel !== level) {
+    stopBossShake(); // หยุดการสั่นของบอสก่อนหน้า
+    startBossShake(); // เริ่มการสั่นใหม่
+    showBossMessage?.();
+    showBoss(level);
+    currentShakingLevel = level;
+  }
+
+} else {
+  hideBoss();
+  stopBossShake();
+  body.classList.remove("boss-mode");
+  currentShakingLevel = null;
+}
+}
+const bossEffects = {
+  10: ["shadow-burst"],
+  20: ["sky-glow"],
+  30: ["wave"],
+  40: ["distort"],
+  50: ["shadow-burst", "distort"],
+};
+function showBossMessage() {
+  const msg = document.createElement("div");
+  msg.textContent = "⚔️ BOSS FIGHT!";
+  msg.style.position = "fixed";
+  msg.style.top = "40%";
+  msg.style.left = "50%";
+  msg.style.transform = "translate(-50%, -50%)";
+  msg.style.fontSize = "48px";
+  msg.style.fontWeight = "bold";
+  msg.style.color = "red";
+  msg.style.textShadow = "2px 2px black";
+  msg.style.zIndex = "9999";
+
+  document.body.appendChild(msg);
+
+  setTimeout(() => {
+    msg.remove();
+  }, 2000);
+}
+function startBossShake() {
+  stopBossShake(); // ล้างของเก่าก่อน
+
+  // ✅ เริ่มสั่นทันที 2 วิ
+  document.body.classList.add("boss-shaking");
+  bossShakingTimeout = setTimeout(() => {
+    document.body.classList.remove("boss-shaking");
+  }, 2000);
+
+  // ✅ เริ่ม setInterval สำหรับรอบถัดไป
+  bossShakeInterval = setInterval(() => {
+    document.body.classList.add("boss-shaking");
+
+    bossShakingTimeout = setTimeout(() => {
+      document.body.classList.remove("boss-shaking");
+    }, 2000); // สั่น 2 วิ
+  }, 8000); // รวมหยุด 6 วิ
+}
+function stopBossShake() {
+  if (bossShakeInterval) {
+    clearInterval(bossShakeInterval);
+    bossShakeInterval = null;
+  }
+  if (bossShakingTimeout) {
+    clearTimeout(bossShakingTimeout);
+    bossShakingTimeout = null;
+  }
+  document.body.classList.remove("boss-shaking");
+}
+const bossLevels = [10, 20, 30, 40, 50, 60, 70];
+const bossData = {
+  10: { name: "มังกรปฐพี", theme: "เสาหินทมิฬ", effect: "shake" },
+  20: { name: "มังกรเยือกเย็น", theme: "ยอดเขาน้ำแข็ง", effect: "snow" },
+  30: { name: "บอสเงา", theme: "ลานวิญญาณ", effect: "shadow-burst" },
+  40: { name: "มังกรทะเล", theme: "ชั้นกลางของหอคอยแห่งความหวัง", effect: "wave" },
+  50: { name: "Sky Leviathan", theme: "เรือบิน", effect: "sky-glow" },
+  60: { name: "บอสสายฟ้า", theme: "วิหารฟ้าผ่า", effect: "lightning" },
+  70: { name: "บอสมายา", theme: "ห้องแห่งมายา", effect: "distort" }
+};
+const bossImageURLs = {
+  10: "https://i.postimg.cc/FzPL4mWD/10.png",
+  20: "https://i.postimg.cc/RhCHyqRW/20.png",
+  30: "https://i.postimg.cc/XJk5s9wM/30.jpg",
+  40: "https://i.postimg.cc/Df5ssdvL/40.png",
+  50: "https://i.postimg.cc/RVFtT6h8/50.jpg",
+  60: "https://i.postimg.cc/Hk87fqQ9/60.png",
+  70: "https://i.postimg.cc/bvX28mgc/70.png"
+};
+const bossImages = {
+  10: "https://i.postimg.cc/FzPL4mWD/10.png",
+  20: "https://i.postimg.cc/RhCHyqRW/20.png",
+  30: "https://i.postimg.cc/XJk5s9wM/30.jpg",
+  40: "https://i.postimg.cc/Df5ssdvL/40.png",
+  50: "https://i.postimg.cc/RVFtT6h8/50.jpg",
+  60: "https://i.postimg.cc/Hk87fqQ9/60.png",
+  70: "https://i.postimg.cc/bvX28mgc/70.png"
+};
+function applyBossEffect(level) {
+  const boss = document.getElementById("bossImg");
+  boss.className = ""; // ล้างคลาสเดิม
+
+  const effects = bossEffects[level] || ["shadow-burst"]; // fallback effect
+  effects.forEach(effect => boss.classList.add(effect));
+
+  console.log(`🎮 Boss LV${level} ได้เอฟเฟกต์: ${effects.join(", ")}`);
+}
+function enterBossMode() {
+  bossMode = true;
+  bossCorrect = 0;
+
+  // ใส่เอฟเฟกต์จอ
+  document.body.classList.add("shake-screen", "flash-screen", "boss-screen");
+
+  // ลบออกหลัง 1.5 วินาที (กันค้าง)
+  setTimeout(() => {
+    document.body.classList.remove("shake-screen", "flash-screen", "boss-screen");
+  }, 1500);
+
+  // เอฟเฟกต์บอสตัวใหญ่ + บอสเฉพาะ lv
+  const boss = document.getElementById("bossImg");
+  boss.style.transform = "scale(1.8)";
+  boss.style.transition = "transform 0.3s ease";
+
+  applyBossEffect(level); // ใส่เอฟเฟกต์เฉพาะตัวบอส
+}
+
+// ===================================
+// 🌈 10. UI & Theme Effects
+// ===================================
+function updateThemeByLevel(level) { ... }
+function updateBackgroundByLevel(level) {
+  const bg = document.getElementById("backgroundEffect");
+  if (!bg) return;
+  bg.className = ""; // เคลียร์ธีมเดิมก่อน
+
+  if (level <= 5) {
+    bg.classList.add("theme1");
+  } else if (level <= 9) {
+    bg.classList.add("theme2");
+  } else if (level <= 14) {
+    bg.classList.add("theme3");
+  } else if (level <= 19) {
+    bg.classList.add("theme4");
+  } else if (level <= 24) {
+    bg.classList.add("theme5");
+  } else if (level <= 29) {
+    bg.classList.add("theme6");
+  } else if (level <= 34) {
+    bg.classList.add("theme7");
+  } else if (level <= 39) {
+    bg.classList.add("theme8");
+  } else if (level <= 45) {
+    bg.classList.add("theme9");
+  } else if (level <= 49) {
+    bg.classList.add("theme10");
+  } else if (level <= 55) {
+    bg.classList.add("theme11");
+  } else if (level <= 59) {
+    bg.classList.add("theme12");
+  } else if (level === 60) {
+    bg.classList.add("theme13");
+  } else if (level <= 69) {
+    bg.classList.add("theme14");
+  } else if (level <= 79) {
+    bg.classList.add("theme15");
+  } else if (level <= 80) {
+    bg.classList.add("theme16");
+  } else {
+    bg.classList.add("theme-default");
+  }
+}
+function showLevelMessage(level) {
+  if (level === lastLevelMessageShown) return; // ⛔ ไม่ต้องแสดงซ้ำ
+  lastLevelMessageShown = level;
+  const messages = {
+    1: "ยินดีตอนรับเข้าสู่หมู่บ้านเริ่มต้น\nโปรดเตรียมไอเทมให้พร้อมก่อนผจญภัย",
+    2: "🧙‍♂️ ท่านกลายเป็นเด็กฝึกหัด",
+    3: "🧮 จงเชื่อในการคำนวณของเจ้า\nแม้จะดูผิดสามัญสำนึก",
+    5: "🔥 ศัตรูเริ่มแข็งแกร่งขึ้น\nพลังความรู้ของเจ้าถูกทดสอบ!",
+    6: "📜 ตั้งแต่ชั้นนี้เป็นต้นไปเมื่อชนะ\nมีโอกาสดรอปไอเทมบัตรชั่วโมง",
+    7: "🗡️ ท่านกลายเป็นนักผจญภัยมือใหม่!",
+    9: "🧙‍♂️ พื้นดินกำลังสั่นไหว",
+    10: "👹บอสตัวแรกปรากฏตัว!!",
+    11: "📜 น่าเสียดาย\nท่านฆ่าบอสสำเร็จแต่ไม่ดรอบบัตรชั่วโมง",
+    12: "🛡️ท่านเลื่อนยศเป็น\nผู้กล้าแห่งหมู่บ้าน",
+    14: "👁️ท่านถูกบางสิ่งจ้องมอง",
+    15: " 🔮 พลังเวทปั่นป่วน",
+    19: "❄️ท่านรู้สึกหนาว",
+    21: "ท่านเลื่อนระดับเป็น\n🐉ผู้ปราบมังกร!!!",
+    22: "👁️ เจ้าแห่งหอคอยสังเกตเห็นท่าน!!!",
+    24: "🌋 ท่านสัมผัสได้ว่าข้างหน้าอากาศเริ่มร้อน ",
+    29: "เหลืออีกไม่ไกลจากยอดหอคอย!",
+    30: "✨ ท่านได้รับไอเทมบ้างอย่าง\nโปรดถามคนที่อยู่ข้างหน้าท่าน",
+    35: "🔒 ประตูแห่งความลับอยู่ตรงหน้า",
+    40: "🔒 ประตูแห่งความลับอยู่ตรงหน้า",
+    // เพิ่มได้ตามต้องการ👑 บอสตัวที่ 3 ปรากฏ!\nหากชนะได้ เจ้าคือผู้กล้าแท้จริง!
+  };
+  
+  if (messages[level]) {
+    const msg = messages[level].replace(/\n/g, "<br>");
+    document.getElementById("levelMessageText").innerHTML = msg;
+    document.getElementById("levelMessageBox").style.display = "block";
+  }
+}
+function hideLevelMessage() {
+  document.getElementById("levelMessageBox").style.display = "none";
+}
+document.getElementById("submitBtn").onclick = function () {
+  const userAnswer = document.getElementById("answer").value.trim();
+
+  this.disabled = true; // ปิดปุ่มชั่วคราว
+  document.getElementById("feedback").textContent = getRandomWaitMessage();
+
+  setTimeout(() => {
+    if (userAnswer === currentAnswer) {
+      document.getElementById("feedback").textContent = "✅ ถูกต้อง!";
+      level++;
+      updateScore();
+    } else {
+      document.getElementById("feedback").textContent = `❌ ผิดจ้า! คำตอบที่ถูกคือ ${currentAnswer}`;
+      hp--;
+      updateHearts();
+    }
+
+    if (hp <= 0) {
+      endGame();
+    } else {
+      setTimeout(() => {
+        generateQuestion();
+        document.getElementById("submitBtn").disabled = false;
+      }, 1000);
+    }
+  }, 2000);
+};
+// ===================================
+// 📦 11. Utility Functions
+// ===================================
+function getRandom(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+/ 🔄 สุ่มช้อย
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+function getRandomWaitMessage() {
+  const messages = [
+    "⏳ กำลังตรวจคำตอบ...",
+    "🔍 กำลังตรวจสอบความรู้...",
+    "🤔 คำตอบนี้... จะใช่หรือไม่?",
+    "📚 รอสักครู่ กำลังประเมินผล...",
+    "🧾 คำตอบกำลังถูกประเมิน...",
+    "🌀 ระบบกำลังสั่นสะเทือนด้วยความลุ้น!",
+  ];
+  return messages[Math.floor(Math.random() * messages.length)];
+}
+
+// ===================================
+// 🧷 12. Event Bindings
+// ===================================
+document.addEventListener("DOMContentLoaded", () => {
+  updateLeaderboard();
+
+   const submitBtn = document.getElementById("submitBtn");
+  submitBtn.replaceWith(submitBtn.cloneNode(true)); // ลบ event เก่าออก
+   });
+
+document.getElementById("submitBtn").addEventListener("click", () => {
+    const mc = document.getElementById("multiple-choice");
+    if (mc.style.display === "none") {
+      checkAnswerFromInputs();
+    } else {
+      // logic สำหรับ multiple-choice
+    }
+  });
+   console.log("🟡 [LOG] ปุ่มส่งถูกคลิก");
+  const mc = document.getElementById("multiple-choice");
+  if (mc.style.display === "none") {
+    checkAnswerFromInputs();
+  } else {
+    // หากมี logic สำหรับ multiple-choice ในอนาคต ใส่ตรงนี้ได้
+  }
+});
+document.getElementById("startBtn").addEventListener("click", () => {
+  const loginScreen = document.getElementById("login-screen");
+  const gameScreen = document.getElementById("game");
+updateHearts();
+  playerName = document.getElementById("playerName").value.trim();
+  if (!playerName) {
+    alert("กรุณากรอกชื่อก่อนเริ่มเกม");
+    return; // ✅ return อยู่ภายในฟังก์ชัน OK
+  }
+
+  loginScreen.classList.add("fade-out");
+
+  setTimeout(() => {
+    loginScreen.style.display = "none";
+    gameScreen.classList.add("fade-in");
+    gameScreen.style.display = "block";
+
+    updateUI();
+    generateQuestion();
+  }, 800); // ✅ หลัง fade-out ค่อยเริ่มเกม
+});
+document.getElementById("retryBtn").addEventListener("click", () => {
+    if (hp <= 0) {
+      document.getElementById("feedback").textContent = "💀 พลังชีวิตหมดแล้ว! ท่านร่วงล่นจากหอคอย";
+      return;
+    }
+    document.getElementById("feedback").textContent = "";
+    document.getElementById("submitBtn").disabled = false;
+    document.getElementById("retryBtn").style.display = "none";
+    timeUp = false;
+    generateQuestion();
+  });
+
+// Firebase Connection Watcher
+firebase.database().ref(".info/connected").on("value", function(snapshot) {
+  if (snapshot.val() === false) {
+    alert("⚠️ การเชื่อมต่ออินเทอร์เน็ตขาด กรุณาเชื่อมต่อใหม่ก่อนเล่นต่อ");
+  }
+});
