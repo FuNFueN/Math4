@@ -1,6 +1,3 @@
-// ===================================
-// 🧱 1. Configuration & Global Variables
-// ===================================
 const firebaseConfig = {
   apiKey: "AIzaSyDUsBD_dwqR4Y466sA4lXukPA3hqk5-KJY",
   authDomain: "math-p4.firebaseapp.com",
@@ -40,11 +37,40 @@ let isSubmitting = false;
 
 const levelTimerMap = { 50: 40, 60: 40, 100: 40 };
 const bossLevels = [10, 20, 30, 40, 50, 60, 70];
-
-const bossData = { ... };
-const bossImageURLs = { ... };
-const bossImages = { ... };
-const bossEffects = { ... };
+const bossData = {
+  10: { name: "มังกรปฐพี", theme: "เสาหินทมิฬ", effect: "shake" },
+  20: { name: "มังกรเยือกเย็น", theme: "ยอดเขาน้ำแข็ง", effect: "snow" },
+  30: { name: "บอสเงา", theme: "ลานวิญญาณ", effect: "shadow-burst" },
+  40: { name: "มังกรทะเล", theme: "ชั้นกลางของหอคอยแห่งความหวัง", effect: "wave" },
+  50: { name: "Sky Leviathan", theme: "เรือบิน", effect: "sky-glow" },
+  60: { name: "บอสสายฟ้า", theme: "วิหารฟ้าผ่า", effect: "lightning" },
+  70: { name: "บอสมายา", theme: "ห้องแห่งมายา", effect: "distort" }
+};                  
+const bossImageURLs = {
+  10: "https://i.postimg.cc/FzPL4mWD/10.png",
+  20: "https://i.postimg.cc/RhCHyqRW/20.png",
+  30: "https://i.postimg.cc/XJk5s9wM/30.jpg",
+  40: "https://i.postimg.cc/Df5ssdvL/40.png",
+  50: "https://i.postimg.cc/RVFtT6h8/50.jpg",
+  60: "https://i.postimg.cc/Hk87fqQ9/60.png",
+  70: "https://i.postimg.cc/bvX28mgc/70.png"
+};                       
+const bossImages = {
+  10: "https://i.postimg.cc/FzPL4mWD/10.png",
+  20: "https://i.postimg.cc/RhCHyqRW/20.png",
+  30: "https://i.postimg.cc/XJk5s9wM/30.jpg",
+  40: "https://i.postimg.cc/Df5ssdvL/40.png",
+  50: "https://i.postimg.cc/RVFtT6h8/50.jpg",
+  60: "https://i.postimg.cc/Hk87fqQ9/60.png",
+  70: "https://i.postimg.cc/bvX28mgc/70.png"
+};
+const bossEffects = {
+  10: ["shadow-burst"],
+  20: ["sky-glow"],
+  30: ["wave"],
+  40: ["distort"],
+  50: ["shadow-burst", "distort"],
+};
 
 // ===================================
 // 🎮 2. Game Lifecycle Functions
@@ -71,8 +97,49 @@ function updateInventoryUI() {
     itemList.appendChild(li);
   });
 }
-function startGame() { ... }
-function endGame() { ... }
+function startGame() {
+  // รีเซ็ตค่าหลัก
+  score = 0;
+  level = 1;
+  hp = 4;
+  maxHp = 7;
+  inventory = [];
+  timeLeft = 30;
+  correctCount = 0;
+  reviveItemUsed = false;
+  alreadyEnded = false;
+
+  // ซ่อนหน้าจอเริ่มต้น & แสดงเกม
+  document.getElementById("start-screen").style.display = "none";
+  document.getElementById("game-container").style.display = "block";
+
+  // อัปเดต UI
+  updateUI();
+  updateInventoryUI();
+  updateHearts();
+
+  // เริ่มคำถามแรก
+  generateQuestion();
+
+  // เริ่มจับเวลา
+  startFlexibleTimer(level);
+}
+function endGame() {
+  if (alreadyEnded) return;
+  alreadyEnded = true;
+
+  clearInterval(timerId); // หยุดจับเวลา
+
+  // แสดงหน้าจอจบเกม
+  document.getElementById("game-container").style.display = "none";
+  document.getElementById("game-over-screen").style.display = "block";
+  document.getElementById("final-score").textContent = `คะแนนรวม: ${score}`;
+
+  // บันทึกคะแนน
+  saveScore(() => {
+    updateLeaderboard();
+  });
+}
 
 // ===================================
 // ⏱ 3. Timer Functions
@@ -154,213 +221,111 @@ function updateTimerDisplay() {
 // ❓ 4. Question Generation
 // ===================================
 function generateQuestion() {
+  const container = document.getElementById("question-grid");
+  container.innerHTML = '';
 
   updateThemeByLevel(level);
-const container = document.getElementById("question-grid");
-  const body = document.body;
-  container.innerHTML = '';
-  let a = 0, b = 0, op = '+';
-  
+  showLevelMessage(level);
 
   if (isBossLevel(level)) {
-  showBoss(level);
-} else {
-  document.getElementById("bossArea").style.display = "none";
-}
-   if (isBossLevel(level)) {
-    showBoss(level); // แสดงบอสเฉพาะเวลาที่อยู่ชั้นบอส
+    showBoss(level);
+    enterBossMode();
   } else {
-    hideBoss(); // ซ่อนบอส
-  }
-
-if (level === 1) {
-  op = '+';
-  a = Math.floor(Math.random() * 90000) + 10000;
-  b = Math.floor(Math.random() * 9000) + 1000;
-} else if (level >= 2 && level <= 3) {
-op = '+';
-  a = Math.floor(Math.random() * 900000) + 100000;
-  b = Math.floor(Math.random() * 90000) + 10000;
-} else if (level >= 4 && level <= 5) {
-op = '-';
-  a = Math.floor(Math.random() * 900000) + 100000;
-  b = Math.floor(Math.random() * 90000) + 10000;
-} else if (level >= 6 && level <= 7) {
-op = '*';
-  a = Math.floor(Math.random() * 50) + 20; 
-  b = Math.floor(Math.random() * 50) + 20;
-} else if (level >= 8 && level <=9 ) {
-  op = '/';
- b = Math.floor(Math.random() * 8) + 2; 
- a = b * (Math.floor(Math.random() * 902) + 99);
-} else if (level === 10) {
-op = '+';
-  a = Math.floor(Math.random() * 90000000) + 10000000;
-  b = Math.floor(Math.random() * 9000000) + 1000000;
-
-} else if (level >= 11 && level <= 14) {
-  op = '+';
-  a = Math.floor(Math.random() * 9000000) + 1000000; 
-  b = Math.floor(Math.random() * 900000) + 100000;
-} else if (level >= 15 && level <= 19) {
-  op = '-';
-  a = Math.floor(Math.random() * 9000000) + 1000000; 
-  b = Math.floor(Math.random() * 900000) + 100000;
- } else if (level === 20) {
-op = '-';
-  a = Math.floor(Math.random() * 90000000) + 10000000;
-  b = Math.floor(Math.random() * 9000000) + 1000000;
-
-} else if (level >= 21 && level <= 25) {
-  op = '*';
-  a = Math.floor(Math.random() * 100) + 10; 
-  b = Math.floor(Math.random() * 100) + 10;
- } else if (level >= 26 && level <= 29) {
-  op = '*';
-  a = Math.floor(Math.random() * 1000) + 100; 
-  b = Math.floor(Math.random() * 100) + 10;
- } else if (level === 30) {
- op = '*';
-  a = Math.floor(Math.random() * 9000) + 1000; 
-  b = Math.floor(Math.random() * 900) + 100;
-
-} else if (level >= 31 && level <= 35) {
-  op = '/';
-   b = Math.floor(Math.random() * 30) + 20; 
-  a = b * (Math.floor(Math.random() * 902) + 99);
-} else if (level >= 36 && level <= 39) {
-  op = '/';
-  b = Math.floor(Math.random() * 80) + 20; 
-  a = b * (Math.floor(Math.random() * 1000) + 100);
-} else if (level === 40) {
- op = '/';
- b = Math.floor(Math.random() * 9000) + 900;
- a = b * (Math.floor(Math.random() * 9000) + 1000);
-
-} else if (level >= 41 && level <= 45) {
-  op = '+';
-  a = Math.floor(Math.random() * 90000000) + 10000000;
-  b = Math.floor(Math.random() * 9000000) + 1000000;
-} else if (level >= 46 && level <= 49) {
-  op = '-';
-  a = Math.floor(Math.random() * 90000000) + 10000000;
-  b = Math.floor(Math.random() * 9000000) + 1000000;
-}
-  if (level >= 1 && level <= 49) {
-    let result = 0;
-    switch (op) {
-      case '+': result = a + b; break;
-      case '-': result = a - b; break;
-      case '*': result = a * b; break;
-      case '/': result = a / b; break;
-    }
-    currentAnswer = result.toString();
-    console.log("โจทย์:", a, op, b, "คำตอบที่ถูก:", currentAnswer);
-    renderVerticalOperation(a, b, op);
-showLevelMessage(level);
-    if (levelTimerMap[level]) {
-      startTimer(levelTimerMap[level], () => {
-        document.getElementById("feedback").textContent = `⏳ หมดเวลา! คำตอบคือ ${currentAnswer}`;
-        hp--;
-        updateHearts();
-        setTimeout(() => {
-          if (hp > 0) {
-            level++;
-            generateQuestion();
-          } else {
-            endGame();
-          }
-        }, 1500);
-      });
-    }
-    return;
-  }
-  if (level === 50) {
-    const q = generateTwoStepPlusMinus();
-    expression = q.expression;
-    answer = currentAnswer = q.answer;
-    renderHorizontalTwoStep(expression);
-    if (levelTimerMap[level]) {
-      startTimer(levelTimerMap[level], () => {
-        document.getElementById("feedback").textContent = `⏳ หมดเวลา! คำตอบคือ ${answer}`;
-        hp--;
-        updateHearts();
-        setTimeout(() => {
-          if (hp > 0) {
-            level++;
-            generateQuestion();
-          } else {
-            endGame();
-          }
-        }, 1500);
-      });
-    }
-    return;
-  }
-
-  if (level >= 51 && level <= 53) {
-    clearInterval(timer); // ✅ หยุดตัวนับก่อนหน้า
-    document.getElementById("timer").textContent = "";
-    const q = generateDecimalAddition();
-    answer = currentAnswer = q.answer;
-    renderVerticalDecimalOperation(q.a, q.b, q.operator);
-    return;
-  }
-
-  if (level >= 54 && level <= 55) {
-    const q = generateDecimalSubtraction();
-    answer = currentAnswer = q.answer;
-    renderVerticalDecimalOperation(q.a, q.b, q.operator);
-    return;
-  }
-
-  if (level >= 56 && level <= 57) {
-    const q = generateDecimalMultiplication();
-    answer = currentAnswer = q.answer;
-    renderVerticalOperation(q.a, q.b, q.operator);
-    return;
-  }
-
-  if (level >= 58 && level <= 59) {
-    const q = generateDecimalDivision();
-    answer = currentAnswer = q.answer;
-    renderVerticalOperation(q.a, q.b, q.operator);
-    return;
-  }
-
-  if (level === 60) {
-    const q = generateDecimalAddition();
-    answer = currentAnswer = q.answer;
-    renderVerticalDecimalOperation(q.a, q.b, q.operator);
-    if (levelTimerMap[level]) {
-      startTimer(levelTimerMap[level], () => {
-        document.getElementById("feedback").textContent = `⏳ หมดเวลา! คำตอบคือ ${answer}`;
-        hp--;
-        updateHearts();
-        setTimeout(() => {
-          if (hp > 0) {
-            level++;
-            generateQuestion();
-          } else {
-            endGame();
-          }
-        }, 1500);
-      });
-    }
-    return;
+    hideBoss();
   }
 
   if (level >= 61 && level <= 80) {
-  clearInterval(timerId); // หยุดตัวจับเวลาเดิม
-  document.getElementById("timer").textContent = ""; // ไม่ต้องแสดงเวลา
-  fetchChoiceQuestion(level); // ดึงคำถามช้อยส์มาแสดง
-  return;
+    clearInterval(timerId);
+    document.getElementById("timer").textContent = "";
+    fetchChoiceQuestion(level);
+    return;
+  }
+
+  const q = generateQuestionByLevel(level);
+  answer = currentAnswer = q.answer;
+
+  if (q.operator === '/') {
+    renderHorizontalTwoStep(`${q.a} ${q.operator} ${q.b}`);
+  } else if (q.operator.includes(".")) {
+    renderVerticalDecimalOperation(q.a, q.b, q.operator);
+  } else {
+    renderVerticalOperation(q.a, q.b, q.operator);
+  }
+
+  if (levelTimerMap[level]) {
+    startTimer(levelTimerMap[level], () => {
+      document.getElementById("feedback").textContent = `⏳ หมดเวลา! คำตอบคือ ${currentAnswer}`;
+      hp--;
+      updateHearts();
+      if (hp <= 0 && inventory.includes('ชีวิตพิเศษ') && !reviveItemUsed) {
+        reviveItemUsed = true;
+        hp = 2;
+        showItemDrop('🎁 สกิล "ชีวิตพิเศษ" ทำงาน!');
+        updateHearts();
+      } else {
+        setTimeout(() => {
+          if (hp > 0) {
+            level++;
+            generateQuestion();
+          } else {
+            endGame();
+          }
+        }, 1500);
+      }
+    });
+  }
 }
-  else {
-  generateQuestionByLevel(level);
+function generateQuestionByLevel(level) {
+  let a = 0, b = 0, operator = '+';
+  if (level >= 1 && level <= 10) {
+    operator = '+';
+    a = Math.floor(Math.random() * 90000) + 10000;
+    b = Math.floor(Math.random() * 9000) + 1000;
+  } else if (level >= 11 && level <= 20) {
+    operator = '-';
+    a = Math.floor(Math.random() * 9000000) + 1000000;
+    b = Math.floor(Math.random() * 900000) + 100000;
+  } else if (level >= 21 && level <= 30) {
+    operator = '*';
+    a = Math.floor(Math.random() * 1000) + 100;
+    b = Math.floor(Math.random() * 100) + 10;
+  } else if (level >= 31 && level <= 40) {
+    operator = '/';
+    b = Math.floor(Math.random() * 80) + 20;
+    a = b * (Math.floor(Math.random() * 1000) + 100);
+  } else if (level >= 41 && level <= 50) {
+    operator = '+';
+    a = Math.floor(Math.random() * 90000000) + 10000000;
+    b = Math.floor(Math.random() * 9000000) + 1000000;
+  } else if (level >= 51 && level <= 53) {
+    return generateDecimalAddition();
+  } else if (level >= 54 && level <= 55) {
+    return generateDecimalSubtraction();
+  } else if (level >= 56 && level <= 57) {
+    return generateDecimalMultiplication();
+  } else if (level >= 58 && level <= 59) {
+    return generateDecimalDivision();
+  } else {
+    operator = '+';
+    a = Math.floor(Math.random() * 100000) + 10000;
+    b = Math.floor(Math.random() * 10000) + 1000;
+  }
+
+  let answer = 0;
+  switch (operator) {
+    case '+': answer = a + b; break;
+    case '-': answer = a - b; break;
+    case '*': answer = a * b; break;
+    case '/': answer = a / b; break;
+  }
+
+  return {
+    a: a,
+    b: b,
+    operator: operator,
+    answer: answer
+  };
 }
-}
-function generateQuestionByLevel(level) { ... }
 function generateTwoStepAddSub() {
   // เช่น ให้ทำ + แล้ว - เป็นขั้นตอนเดียว
   const a = getRandom(100, 999);
@@ -420,7 +385,6 @@ function generateDecimalSubtraction() {
     answer: answer.toString()
   };
 }
-function generateDecimalSubtraction() { ... }
 function generateDecimalMultiplication() {
   const a = parseFloat((Math.random() * 90 + 10).toFixed(2)); // 10.00 - 100.00
   const b = parseFloat((Math.random() * 9 + 1).toFixed(2));   // 1.00 - 10.00
@@ -444,7 +408,74 @@ function generateSpecialQuestion(stage, sub) {
   renderHorizontalTwoStep(q.expression);
   startFlexibleTimer(stage);
 } 
-function fetchChoiceQuestion(level) { ... }
+async function fetchChoiceQuestion(level) {
+  const url = "https://opensheet.vercel.app/1ZhBlwzfeGMHY9OcBbLDp3Iyn7m46WxV6yJNfNqYTVvg/Sheet1";
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const item = data[Math.floor(Math.random() * data.length)];
+    if (!item) return;
+
+    const allChoices = shuffle([
+  item.correct,
+  item.choice1,
+  item.choice2,
+  item.choice3,
+  item.choice4,
+  item.choice5,
+].filter(Boolean));
+
+    currentAnswer = item.correct;
+    renderMultipleChoice(item.question, allChoices);
+    document.getElementById("submitBtn").style.display = "none";
+  } catch (err) {
+    console.error("Error fetching multiple choice question:", err);
+  }
+}
+function updateLeaderboard() {
+  const list = document.getElementById("leaderboard-list");
+  const boardRef = db.ref("tower-leaderboard");
+
+  boardRef.once("value", snapshot => {
+    const entries = [];
+
+    snapshot.forEach(child => {
+      const val = child.val();
+      if (val && typeof val.score === "number") {
+        entries.push(val);
+      }
+    });
+
+    // เรียงคะแนนจากมากไปน้อย
+    entries.sort((a, b) => b.score - a.score);
+
+    // ล้างรายการก่อนแสดงใหม่
+    list.innerHTML = "";
+
+    const medals = ["🥇", "🥈", "🥉"];
+
+    entries.slice(0, 10).forEach((entry, index) => {
+      const li = document.createElement("li");
+      li.style.marginBottom = "6px";
+
+      const rank = medals[index] || `${index + 1}.`;
+
+      const topLineClass = `rank-${index + 1}`;
+li.innerHTML = `
+  <div class="top-line ${topLineClass}">
+    ${rank} ${entry.name}
+  </div>
+  <div class="bottom-line">
+    พลังความรู้: ${entry.score} ชั้นที่: ${entry.level}
+  </div>
+`;
+
+      list.appendChild(li);
+    });
+  });
+}
 
 // ===================================
 // 🧠 5. Answer Checking
@@ -1083,74 +1114,7 @@ function updateHighscoreIfNeeded(callback) {
     }
   });
 }
-async function fetchChoiceQuestion(level) {
-  const url = "https://opensheet.vercel.app/1ZhBlwzfeGMHY9OcBbLDp3Iyn7m46WxV6yJNfNqYTVvg/Sheet1";
 
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-
-    const item = data[Math.floor(Math.random() * data.length)];
-    if (!item) return;
-
-    const allChoices = shuffle([
-  item.correct,
-  item.choice1,
-  item.choice2,
-  item.choice3,
-  item.choice4,
-  item.choice5,
-].filter(Boolean));
-
-    currentAnswer = item.correct;
-    renderMultipleChoice(item.question, allChoices);
-    document.getElementById("submitBtn").style.display = "none";
-  } catch (err) {
-    console.error("Error fetching multiple choice question:", err);
-  }
-}
-function updateLeaderboard() {
-  const list = document.getElementById("leaderboard-list");
-  const boardRef = db.ref("tower-leaderboard");
-
-  boardRef.once("value", snapshot => {
-    const entries = [];
-
-    snapshot.forEach(child => {
-      const val = child.val();
-      if (val && typeof val.score === "number") {
-        entries.push(val);
-      }
-    });
-
-    // เรียงคะแนนจากมากไปน้อย
-    entries.sort((a, b) => b.score - a.score);
-
-    // ล้างรายการก่อนแสดงใหม่
-    list.innerHTML = "";
-
-    const medals = ["🥇", "🥈", "🥉"];
-
-    entries.slice(0, 10).forEach((entry, index) => {
-      const li = document.createElement("li");
-      li.style.marginBottom = "6px";
-
-      const rank = medals[index] || `${index + 1}.`;
-
-      const topLineClass = `rank-${index + 1}`;
-li.innerHTML = `
-  <div class="top-line ${topLineClass}">
-    ${rank} ${entry.name}
-  </div>
-  <div class="bottom-line">
-    พลังความรู้: ${entry.score} ชั้นที่: ${entry.level}
-  </div>
-`;
-
-      list.appendChild(li);
-    });
-  });
-}
 
 // ===================================
 // 🧪 9. Boss Functions
@@ -1174,6 +1138,88 @@ function showBoss(level) {
   bossArea.style.display = "block";
 }
 function hideBoss(){ document.getElementById("bossArea").style.display="none"; }
+
+
+function showBossMessage() {
+  const msg = document.createElement("div");
+  msg.textContent = "⚔️ BOSS FIGHT!";
+  msg.style.position = "fixed";
+  msg.style.top = "40%";
+  msg.style.left = "50%";
+  msg.style.transform = "translate(-50%, -50%)";
+  msg.style.fontSize = "48px";
+  msg.style.fontWeight = "bold";
+  msg.style.color = "red";
+  msg.style.textShadow = "2px 2px black";
+  msg.style.zIndex = "9999";
+
+  document.body.appendChild(msg);
+
+  setTimeout(() => {
+    msg.remove();
+  }, 2000);
+}
+function startBossShake() {
+  stopBossShake(); // ล้างของเก่าก่อน
+
+  // ✅ เริ่มสั่นทันที 2 วิ
+  document.body.classList.add("boss-shaking");
+  bossShakingTimeout = setTimeout(() => {
+    document.body.classList.remove("boss-shaking");
+  }, 2000);
+
+  // ✅ เริ่ม setInterval สำหรับรอบถัดไป
+  bossShakeInterval = setInterval(() => {
+    document.body.classList.add("boss-shaking");
+
+    bossShakingTimeout = setTimeout(() => {
+      document.body.classList.remove("boss-shaking");
+    }, 2000); // สั่น 2 วิ
+  }, 8000); // รวมหยุด 6 วิ
+}
+function stopBossShake() {
+  if (bossShakeInterval) {
+    clearInterval(bossShakeInterval);
+    bossShakeInterval = null;
+  }
+  if (bossShakingTimeout) {
+    clearTimeout(bossShakingTimeout);
+    bossShakingTimeout = null;
+  }
+  document.body.classList.remove("boss-shaking");
+}
+function applyBossEffect(level) {
+  const boss = document.getElementById("bossImg");
+  boss.className = ""; // ล้างคลาสเดิม
+
+  const effects = bossEffects[level] || ["shadow-burst"]; // fallback effect
+  effects.forEach(effect => boss.classList.add(effect));
+
+  console.log(`🎮 Boss LV${level} ได้เอฟเฟกต์: ${effects.join(", ")}`);
+}
+function enterBossMode() {
+  bossMode = true;
+  bossCorrect = 0;
+
+  // ใส่เอฟเฟกต์จอ
+  document.body.classList.add("shake-screen", "flash-screen", "boss-screen");
+
+  // ลบออกหลัง 1.5 วินาที (กันค้าง)
+  setTimeout(() => {
+    document.body.classList.remove("shake-screen", "flash-screen", "boss-screen");
+  }, 1500);
+
+  // เอฟเฟกต์บอสตัวใหญ่ + บอสเฉพาะ lv
+  const boss = document.getElementById("bossImg");
+  boss.style.transform = "scale(1.8)";
+  boss.style.transition = "transform 0.3s ease";
+
+  applyBossEffect(level); // ใส่เอฟเฟกต์เฉพาะตัวบอส
+}
+
+// ===================================
+// 🌈 10. UI & Theme Effects
+// ===================================
 function updateThemeByLevel(level){
   const body = document.body;
   const stageNameEl = document.getElementById("stageName");
@@ -1263,122 +1309,6 @@ if (isBossLevel(level)) {
   currentShakingLevel = null;
 }
 }
-const bossEffects = {
-  10: ["shadow-burst"],
-  20: ["sky-glow"],
-  30: ["wave"],
-  40: ["distort"],
-  50: ["shadow-burst", "distort"],
-};
-function showBossMessage() {
-  const msg = document.createElement("div");
-  msg.textContent = "⚔️ BOSS FIGHT!";
-  msg.style.position = "fixed";
-  msg.style.top = "40%";
-  msg.style.left = "50%";
-  msg.style.transform = "translate(-50%, -50%)";
-  msg.style.fontSize = "48px";
-  msg.style.fontWeight = "bold";
-  msg.style.color = "red";
-  msg.style.textShadow = "2px 2px black";
-  msg.style.zIndex = "9999";
-
-  document.body.appendChild(msg);
-
-  setTimeout(() => {
-    msg.remove();
-  }, 2000);
-}
-function startBossShake() {
-  stopBossShake(); // ล้างของเก่าก่อน
-
-  // ✅ เริ่มสั่นทันที 2 วิ
-  document.body.classList.add("boss-shaking");
-  bossShakingTimeout = setTimeout(() => {
-    document.body.classList.remove("boss-shaking");
-  }, 2000);
-
-  // ✅ เริ่ม setInterval สำหรับรอบถัดไป
-  bossShakeInterval = setInterval(() => {
-    document.body.classList.add("boss-shaking");
-
-    bossShakingTimeout = setTimeout(() => {
-      document.body.classList.remove("boss-shaking");
-    }, 2000); // สั่น 2 วิ
-  }, 8000); // รวมหยุด 6 วิ
-}
-function stopBossShake() {
-  if (bossShakeInterval) {
-    clearInterval(bossShakeInterval);
-    bossShakeInterval = null;
-  }
-  if (bossShakingTimeout) {
-    clearTimeout(bossShakingTimeout);
-    bossShakingTimeout = null;
-  }
-  document.body.classList.remove("boss-shaking");
-}
-const bossLevels = [10, 20, 30, 40, 50, 60, 70];
-const bossData = {
-  10: { name: "มังกรปฐพี", theme: "เสาหินทมิฬ", effect: "shake" },
-  20: { name: "มังกรเยือกเย็น", theme: "ยอดเขาน้ำแข็ง", effect: "snow" },
-  30: { name: "บอสเงา", theme: "ลานวิญญาณ", effect: "shadow-burst" },
-  40: { name: "มังกรทะเล", theme: "ชั้นกลางของหอคอยแห่งความหวัง", effect: "wave" },
-  50: { name: "Sky Leviathan", theme: "เรือบิน", effect: "sky-glow" },
-  60: { name: "บอสสายฟ้า", theme: "วิหารฟ้าผ่า", effect: "lightning" },
-  70: { name: "บอสมายา", theme: "ห้องแห่งมายา", effect: "distort" }
-};
-const bossImageURLs = {
-  10: "https://i.postimg.cc/FzPL4mWD/10.png",
-  20: "https://i.postimg.cc/RhCHyqRW/20.png",
-  30: "https://i.postimg.cc/XJk5s9wM/30.jpg",
-  40: "https://i.postimg.cc/Df5ssdvL/40.png",
-  50: "https://i.postimg.cc/RVFtT6h8/50.jpg",
-  60: "https://i.postimg.cc/Hk87fqQ9/60.png",
-  70: "https://i.postimg.cc/bvX28mgc/70.png"
-};
-const bossImages = {
-  10: "https://i.postimg.cc/FzPL4mWD/10.png",
-  20: "https://i.postimg.cc/RhCHyqRW/20.png",
-  30: "https://i.postimg.cc/XJk5s9wM/30.jpg",
-  40: "https://i.postimg.cc/Df5ssdvL/40.png",
-  50: "https://i.postimg.cc/RVFtT6h8/50.jpg",
-  60: "https://i.postimg.cc/Hk87fqQ9/60.png",
-  70: "https://i.postimg.cc/bvX28mgc/70.png"
-};
-function applyBossEffect(level) {
-  const boss = document.getElementById("bossImg");
-  boss.className = ""; // ล้างคลาสเดิม
-
-  const effects = bossEffects[level] || ["shadow-burst"]; // fallback effect
-  effects.forEach(effect => boss.classList.add(effect));
-
-  console.log(`🎮 Boss LV${level} ได้เอฟเฟกต์: ${effects.join(", ")}`);
-}
-function enterBossMode() {
-  bossMode = true;
-  bossCorrect = 0;
-
-  // ใส่เอฟเฟกต์จอ
-  document.body.classList.add("shake-screen", "flash-screen", "boss-screen");
-
-  // ลบออกหลัง 1.5 วินาที (กันค้าง)
-  setTimeout(() => {
-    document.body.classList.remove("shake-screen", "flash-screen", "boss-screen");
-  }, 1500);
-
-  // เอฟเฟกต์บอสตัวใหญ่ + บอสเฉพาะ lv
-  const boss = document.getElementById("bossImg");
-  boss.style.transform = "scale(1.8)";
-  boss.style.transition = "transform 0.3s ease";
-
-  applyBossEffect(level); // ใส่เอฟเฟกต์เฉพาะตัวบอส
-}
-
-// ===================================
-// 🌈 10. UI & Theme Effects
-// ===================================
-function updateThemeByLevel(level) { ... }
 function updateBackgroundByLevel(level) {
   const bg = document.getElementById("backgroundEffect");
   if (!bg) return;
@@ -1489,7 +1419,7 @@ document.getElementById("submitBtn").onclick = function () {
 function getRandom(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
-/ 🔄 สุ่มช้อย
+// 🔄 สุ่มช้อย
 function shuffle(array) {
   return array.sort(() => Math.random() - 0.5);
 }
@@ -1516,14 +1446,7 @@ document.addEventListener("DOMContentLoaded", () => {
    });
 
 document.getElementById("submitBtn").addEventListener("click", () => {
-    const mc = document.getElementById("multiple-choice");
-    if (mc.style.display === "none") {
-      checkAnswerFromInputs();
-    } else {
-      // logic สำหรับ multiple-choice
-    }
-  });
-   console.log("🟡 [LOG] ปุ่มส่งถูกคลิก");
+  console.log("🟡 [LOG] ปุ่มส่งถูกคลิก");
   const mc = document.getElementById("multiple-choice");
   if (mc.style.display === "none") {
     checkAnswerFromInputs();
@@ -1531,14 +1454,16 @@ document.getElementById("submitBtn").addEventListener("click", () => {
     // หากมี logic สำหรับ multiple-choice ในอนาคต ใส่ตรงนี้ได้
   }
 });
+
 document.getElementById("startBtn").addEventListener("click", () => {
   const loginScreen = document.getElementById("login-screen");
   const gameScreen = document.getElementById("game");
-updateHearts();
+
+  updateHearts();
   playerName = document.getElementById("playerName").value.trim();
   if (!playerName) {
     alert("กรุณากรอกชื่อก่อนเริ่มเกม");
-    return; // ✅ return อยู่ภายในฟังก์ชัน OK
+    return;
   }
 
   loginScreen.classList.add("fade-out");
@@ -1550,26 +1475,17 @@ updateHearts();
 
     updateUI();
     generateQuestion();
-  }, 800); // ✅ หลัง fade-out ค่อยเริ่มเกม
+  }, 800);
 });
-document.getElementById("retryBtn").addEventListener("click", () => {
-    if (hp <= 0) {
-      document.getElementById("feedback").textContent = "💀 พลังชีวิตหมดแล้ว! ท่านร่วงล่นจากหอคอย";
-      return;
-    }
-    document.getElementById("feedback").textContent = "";
-    document.getElementById("submitBtn").disabled = false;
-    document.getElementById("retryBtn").style.display = "none";
-    timeUp = false;
-    generateQuestion();
-  });
-window.onload = function() {
-  window.scrollTo(0, 0);
-};
 
-// Firebase Connection Watcher
-firebase.database().ref(".info/connected").on("value", function(snapshot) {
-  if (snapshot.val() === false) {
-    alert("⚠️ การเชื่อมต่ออินเทอร์เน็ตขาด กรุณาเชื่อมต่อใหม่ก่อนเล่นต่อ");
+document.getElementById("retryBtn").addEventListener("click", () => {
+  if (hp <= 0) {
+    document.getElementById("feedback").textContent = "💀 พลังชีวิตหมดแล้ว! ท่านร่วงล่นจากหอคอย";
+    return;
   }
+  document.getElementById("feedback").textContent = "";
+  document.getElementById("submitBtn").disabled = false;
+  document.getElementById("retryBtn").style.display = "none";
+  timeUp = false;
+  generateQuestion();
 });
