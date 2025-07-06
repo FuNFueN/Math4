@@ -1,0 +1,181 @@
+if (stageLevel === 1) {
+  body.classList.add('theme1');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 2) {
+  body.classList.add('theme2');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 3) {
+  body.classList.add('theme3');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 4) {
+  body.classList.add('theme4');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 5) {
+  body.classList.add('theme5');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 6) {
+  body.classList.add('theme6');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 7) {
+  body.classList.add('theme7');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 8) {
+  body.classList.add('theme8');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 9) {
+  body.classList.add('theme9');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 10) {
+  body.classList.add('theme10');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 11) {
+  body.classList.add('theme11');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 12) {
+  body.classList.add('theme12');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 13) {
+  body.classList.add('theme13');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 14) {
+  body.classList.add('theme14');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 15) {
+  body.classList.add('theme15');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 16) {
+  body.classList.add('theme16');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 17) {
+  body.classList.add('theme17');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 18) {
+  body.classList.add('theme18');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 19) {
+  body.classList.add('theme19');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 20) {
+  body.classList.add('theme20');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 21) {
+  body.classList.add('theme21');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 22) {
+  body.classList.add('theme22');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 23) {
+  body.classList.add('theme23');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 24) {
+  body.classList.add('theme24');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 25) {
+  body.classList.add('theme25');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 26) {
+  body.classList.add('theme26');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 27) {
+  body.classList.add('theme27');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 28) {
+  body.classList.add('theme28');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 29) {
+  body.classList.add('theme29');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 30) {
+  body.classList.add('theme30');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 31) {
+  body.classList.add('theme31');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 32) {
+  body.classList.add('theme32');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 33) {
+  body.classList.add('theme33');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 34) {
+  body.classList.add('theme34');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 35) {
+  body.classList.add('theme35');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 36) {
+  body.classList.add('theme36');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 37) {
+  body.classList.add('theme37');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 38) {
+  body.classList.add('theme38');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 39) {
+  body.classList.add('theme39');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 40) {
+  body.classList.add('theme40');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 41) {
+  body.classList.add('theme41');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 42) {
+  body.classList.add('theme42');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 43) {
+  body.classList.add('theme43');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 44) {
+  body.classList.add('theme44');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 45) {
+  body.classList.add('theme45');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 46) {
+  body.classList.add('theme46');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 47) {
+  body.classList.add('theme47');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 48) {
+  body.classList.add('theme48');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 49) {
+  body.classList.add('theme49');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 50) {
+  body.classList.add('theme50');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 51) {
+  body.classList.add('theme51');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 52) {
+  body.classList.add('theme52');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 53) {
+  body.classList.add('theme53');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 54) {
+  body.classList.add('theme54');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 55) {
+  body.classList.add('theme55');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 56) {
+  body.classList.add('theme56');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 57) {
+  body.classList.add('theme57');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 58) {
+  body.classList.add('theme58');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 59) {
+  body.classList.add('theme59');
+  stageNameEl.textContent = "ว่าบ";
+} else if (stageLevel === 60) {
+  body.classList.add('theme60');
+  stageNameEl.textContent = "ว่าบ";
+}
